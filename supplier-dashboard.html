@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Dashboard - Warehouse Booking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: linear-gradient(135deg, #1a1f36 0%, #2d3561 100%);
+            color: white;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            font-size: 26px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Logo Alpro di Navbar */
+        .logo-alpro-navbar {
+            height: 40px;
+            width: auto;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            padding: 10px 24px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-2px);
+        }
+
+        /* SIDEBAR */
+        .container {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.08);
+            padding: 35px 0;
+        }
+
+        .menu-item {
+            padding: 18px 35px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #4a5568;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .menu-item::before {
+            font-size: 22px;
+        }
+
+        .menu-item:nth-child(1)::before { content: '➕'; }
+        .menu-item:nth-child(2)::before { content: '📜'; }
+
+        .menu-item:hover {
+            background: #f7fafc;
+            border-left-color: #ff8a00;
+            color: #2d3748;
+        }
+
+        .menu-item.active {
+            background: linear-gradient(90deg, #fff5e6 0%, #ffffff 100%);
+            border-left-color: #ff8a00;
+            color: #ff8a00;
+            font-weight: 600;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .page-header {
+            margin-bottom: 35px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            color: #1a202c;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        /* FORM CARD */
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            max-width: 900px;
+            border: 1px solid #f0f0f0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #ff8a00;
+            box-shadow: 0 0 0 4px rgba(255, 138, 0, 0.1);
+            background: white;
+        }
+
+        /* TIMESLOT PICKER (Cinema Style) */
+        .timeslot-picker {
+            margin-top: 30px;
+        }
+
+        .timeslot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .timeslot-item {
+            padding: 20px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .timeslot-item:hover {
+            border-color: #ff8a00;
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(255, 138, 0, 0.15);
+        }
+
+        .timeslot-item.selected {
+            background: linear-gradient(135deg, #ff8a00 0%, #e52e71 100%);
+            color: white;
+            border-color: #ff8a00;
+            box-shadow: 0 6px 20px rgba(255, 138, 0, 0.3);
+        }
+
+        .timeslot-item.unavailable {
+            background: #f7fafc;
+            color: #cbd5e0;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .timeslot-item.unavailable:hover {
+            transform: none;
+            border-color: #e2e8f0;
+            box-shadow: none;
+        }
+
+        .timeslot-time {
+            font-weight: 700;
+            font-size: 17px;
+            margin-bottom: 8px;
+        }
+
+        .timeslot-capacity {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff8a00 0%, #e52e71 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 138, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 138, 0, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* TABLE */
+        .table-container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            overflow-x: auto;
+            border: 1px solid #f0f0f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 18px 16px;
+            text-align: left;
+            font-weight: 700;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f7fafc;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #fafbfc;
+        }
+
+        /* BADGE */
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-approved {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .badge-rejected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* LOADER */
+        .loader {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loader-spin {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #ff8a00;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #047857;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-left: 4px solid #ef4444;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+            
+            .main-content {
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 15px 20px;
+            }
+            
+            .navbar-brand {
+                font-size: 20px;
+            }
+
+            .logo-alpro-navbar {
+                height: 32px;
+            }
+            
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 20px 0;
+            }
+            
+            .menu-item {
+                padding: 15px 20px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .form-card {
+                padding: 25px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .timeslot-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <div class="navbar-brand">
+            <img src="logo-alpro.png" alt="Alpro Logo" class="logo-alpro-navbar">
+            Warehouse Booking - SUPPLIER
+        </div>
+        <div class="navbar-user">
+            <span id="supplierName">Supplier</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- CONTAINER -->
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="menu-item active" onclick="showPage('new-booking')">
+                New Booking
+            </div>
+            <div class="menu-item" onclick="showPage('history')">
+                History
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- NEW BOOKING PAGE -->
+            <div id="new-booking-page" class="page-section active">
+                <div class="page-header">
+                    <h1>New Booking</h1>
+                    <p>Buat booking pengiriman ke warehouse</p>
+                </div>
+
+                <div class="form-card">
+                    <div id="alert-booking" style="display: none;"></div>
+
+                    <form id="booking-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>No. PO *</label>
+                                <input type="text" id="no-po" required placeholder="Masukkan No. PO">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Total Koli *</label>
+                                <input type="number" id="qty-koli" required min="1" placeholder="Jumlah koli">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Total SKU *</label>
+                                <input type="number" id="qty-sku" required min="1" placeholder="Jumlah SKU">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Tanggal Kirim *</label>
+                                <input type="date" id="tgl-kirim" required onchange="loadAvailableSlots()">
+                            </div>
+                        </div>
+
+                        <div class="timeslot-picker">
+                            <label style="font-weight: 600; color: #2d3748; margin-bottom: 12px; display: block; font-size: 14px;">
+                                Pilih Jam Slot *
+                            </label>
+                            
+                            <div id="timeslot-loader" class="loader" style="display: none;">
+                                <div class="loader-spin"></div>
+                                <p>Loading timeslots...</p>
+                            </div>
+
+                            <div id="timeslot-grid" class="timeslot-grid">
+                                <!-- Will be populated dynamically -->
+                            </div>
+
+                            <input type="hidden" id="selected-timeslot" required>
+                        </div>
+
+                        <div style="margin-top: 35px;">
+                            <button type="submit" class="btn btn-primary" id="btn-submit">
+                                🚀 Submit Booking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- HISTORY PAGE -->
+            <div id="history-page" class="page-section">
+                <div class="page-header">
+                    <h1>Booking History</h1>
+                    <p>Riwayat booking Anda</p>
+                </div>
+
+                <div class="table-container">
+                    <div id="history-loader" class="loader">
+                        <div class="loader-spin"></div>
+                        <p>Loading data...</p>
+                    </div>
+                    <table id="history-table" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th>ID Booking</th>
+                                <th>No PO</th>
+                                <th>Tanggal Kirim</th>
+                                <th>Jam Slot</th>
+                                <th>Qty Koli</th>
+                                <th>Qty SKU</th>
+                                <th>Status</th>
+                                <th>Admin Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
+        // ==========================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycby0ofcbiyVzGNo6_Bkqq_DW9SEKx-K5zDAqXpHRWjtcdr7qHFu_cBpT1Zwmt21OCfXF2w/exec';
+
+        let userData = null;
+        let selectedSlot = null;
+
+        // ==========================================
+        // CHECK AUTH
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            const userDataStr = localStorage.getItem('userData');
+            if (!userDataStr) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            userData = JSON.parse(userDataStr);
+            if (userData.role.toLowerCase() !== 'supplier') {
+                alert('Akses ditolak! Anda bukan supplier.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('supplierName').textContent = userData.nama_perusahaan || userData.username;
+
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tgl-kirim').setAttribute('min', today);
+        });
+
+        // ==========================================
+        // NAVIGATION
+        // ==========================================
+        function showPage(page) {
+            // Update menu active
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update page
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(page + '-page').classList.add('active');
+
+            // Load data
+            if (page === 'history') loadHistory();
+        }
+
+        // ==========================================
+        // LOAD AVAILABLE TIMESLOTS
+        // ==========================================
+        async function loadAvailableSlots() {
+            const tanggal = document.getElementById('tgl-kirim').value;
+            if (!tanggal) return;
+
+            document.getElementById('timeslot-loader').style.display = 'block';
+            document.getElementById('timeslot-grid').innerHTML = '';
+            selectedSlot = null;
+            document.getElementById('selected-timeslot').value = '';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'getTimeslots',
+                        tanggal: tanggal
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const grid = document.getElementById('timeslot-grid');
+                    
+                    result.data.forEach(slot => {
+                        const div = document.createElement('div');
+                        div.className = 'timeslot-item';
+                        
+                        if (!slot.isAvailable) {
+                            div.classList.add('unavailable');
+                        }
+
+                        div.innerHTML = `
+                            <div class="timeslot-time">${slot.jam_range}</div>
+                            <div class="timeslot-capacity">
+                                ${slot.isAvailable ? 
+                                    `📍 ${slot.available}/${slot.kapasitas}` : 
+                                    '🔒 PENUH'}
+                            </div>
+                        `;
+
+                        if (slot.isAvailable) {
+                            div.onclick = () => selectTimeslot(slot, div);
+                        }
+
+                        grid.appendChild(div);
+                    });
+
+                    document.getElementById('timeslot-loader').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading timeslots:', error);
+                alert('Error loading timeslots');
+                document.getElementById('timeslot-loader').style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // SELECT TIMESLOT
+        // ==========================================
+        function selectTimeslot(slot, element) {
+            // Remove previous selection
+            document.querySelectorAll('.timeslot-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Add selection
+            element.classList.add('selected');
+            selectedSlot = slot.jam_range;
+            document.getElementById('selected-timeslot').value = slot.jam_range;
+        }
+
+        // ==========================================
+        // SUBMIT BOOKING
+        // ==========================================
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!selectedSlot) {
+                showAlert('Silakan pilih jam slot terlebih dahulu!', 'error');
+                return;
+            }
+
+            const noPo = document.getElementById('no-po').value;
+            const qtyKoli = parseInt(document.getElementById('qty-koli').value);
+            const qtySku = parseInt(document.getElementById('qty-sku').value);
+            const tglKirim = document.getElementById('tgl-kirim').value;
+
+            document.getElementById('btn-submit').disabled = true;
+            document.getElementById('btn-submit').textContent = '⏳ Processing...';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'createBooking',
+                        no_po: noPo,
+                        supplier: userData.nama_perusahaan || userData.username,
+                        qty_koli: qtyKoli,
+                        qty_sku: qtySku,
+                        tgl_kirim: tglKirim,
+                        jam_slot: selectedSlot
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('✅ Booking berhasil dibuat! ID Booking: ' + result.data.id_booking, 'success');
+                    
+                    // Reset form
+                    document.getElementById('booking-form').reset();
+                    document.getElementById('timeslot-grid').innerHTML = '';
+                    selectedSlot = null;
+
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    showAlert('❌ Error: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Error: ' + error.message, 'error');
+            }
+
+            document.getElementById('btn-submit').disabled = false;
+            document.getElementById('btn-submit').textContent = '🚀 Submit Booking';
+        });
+
+        // ==========================================
+        // LOAD HISTORY
+        // ==========================================
+        async function loadHistory() {
+            document.getElementById('history-loader').style.display = 'block';
+            document.getElementById('history-table').style.display = 'none';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'getSupplierHistory',
+                        supplier: userData.nama_perusahaan || userData.username
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const tbody = document.getElementById('history-tbody');
+                    tbody.innerHTML = '';
+
+                    if (result.data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: #9ca3af; padding: 30px;">📭 Belum ada history booking</td></tr>';
+                    } else {
+                        result.data.forEach(booking => {
+                            const tr = document.createElement('tr');
+                            
+                            let statusBadge = '';
+                            if (booking.status.toLowerCase() === 'pending') {
+                                statusBadge = '<span class="badge badge-pending">Pending</span>';
+                            } else if (booking.status.toLowerCase() === 'approved') {
+                                statusBadge = '<span class="badge badge-approved">Approved</span>';
+                            } else if (booking.status.toLowerCase() === 'rejected') {
+                                statusBadge = '<span class="badge badge-rejected">Rejected</span>';
+                            }
+
+                            tr.innerHTML = `
+                                <td style="font-weight: 600;">${booking.id_booking}</td>
+                                <td>${booking.no_po}</td>
+                                <td>${booking.tgl_kirim}</td>
+                                <td>${booking.jam_slot}</td>
+                                <td>${booking.qty_koli}</td>
+                                <td>${booking.qty_sku}</td>
+                                <td>${statusBadge}</td>
+                                <td>${booking.admin_note || '-'}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+
+                    document.getElementById('history-loader').style.display = 'none';
+                    document.getElementById('history-table').style.display = 'table';
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+                alert('Error loading history');
+            }
+        }
+
+        // ==========================================
+        // HELPER FUNCTIONS
+        // ==========================================
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert-booking');
+            alert.textContent = message;
+            alert.className = 'alert alert-' + type;
+            alert.style.display = 'block';
+
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 6000);
+        }
+
+        // ==========================================
+        // LOGOUT
+        // ==========================================
+        function logout() {
+            if (confirm('Yakin ingin logout?')) {
+                localStorage.removeItem('userData');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>
