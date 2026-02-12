@@ -230,6 +230,118 @@
             font-weight: 500;
         }
 
+        /* WEEKLY SCHEDULE STYLES */
+        .schedule-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .day-header {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #ff8a00;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .day-icon {
+            font-size: 28px;
+        }
+
+        .schedule-slot {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid #ff8a00;
+            transition: all 0.3s ease;
+        }
+
+        .schedule-slot:hover {
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(255, 138, 0, 0.2);
+        }
+
+        .slot-time {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ff8a00;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slot-time::before {
+            content: '🕐';
+            font-size: 18px;
+        }
+
+        .slot-supplier {
+            font-size: 15px;
+            color: #2d3748;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slot-supplier::before {
+            content: '🏢';
+            font-size: 16px;
+        }
+
+        .slot-info {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .slot-info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .empty-day {
+            text-align: center;
+            padding: 30px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .empty-day::before {
+            content: '📭';
+            font-size: 48px;
+            display: block;
+            margin-bottom: 15px;
+        }
+
         /* ACTION BAR */
         .action-bar {
             background: white;
@@ -540,6 +652,10 @@
             .main-content {
                 padding: 25px;
             }
+
+            .schedule-container {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
         }
 
         @media (max-width: 768px) {
@@ -573,6 +689,10 @@
             }
             
             .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-container {
                 grid-template-columns: 1fr;
             }
             
@@ -627,7 +747,7 @@
             <div id="dashboard-page" class="page-section active">
                 <div class="page-header">
                     <h1>Dashboard</h1>
-                    <p>Overview statistik booking warehouse</p>
+                    <p>Jadwal booking warehouse per hari</p>
                 </div>
 
                 <div class="stats-grid">
@@ -670,6 +790,15 @@
                             <div class="stat-icon">❌</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- WEEKLY SCHEDULE -->
+                <div id="weekly-schedule-loader" class="loader">
+                    <div class="loader-spin"></div>
+                    <p>Loading jadwal mingguan...</p>
+                </div>
+                <div id="weekly-schedule-container" class="schedule-container" style="display:none;">
+                    <!-- Will be populated by JavaScript -->
                 </div>
             </div>
 
@@ -881,26 +1010,135 @@
         }
 
         // ==========================================
-        // LOAD DASHBOARD
+        // LOAD DASHBOARD WITH WEEKLY SCHEDULE
         // ==========================================
         async function loadDashboard() {
             try {
-                const response = await fetch(API_URL, {
+                // Load stats
+                const statsResponse = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'getDashboardStats'
                     })
                 });
 
-                const result = await response.json();
-                if (result.success) {
-                    document.getElementById('stat-total').textContent = result.data.total;
-                    document.getElementById('stat-pending').textContent = result.data.pending;
-                    document.getElementById('stat-approved').textContent = result.data.approved;
-                    document.getElementById('stat-rejected').textContent = result.data.rejected;
+                const statsResult = await statsResponse.json();
+                if (statsResult.success) {
+                    document.getElementById('stat-total').textContent = statsResult.data.total;
+                    document.getElementById('stat-pending').textContent = statsResult.data.pending;
+                    document.getElementById('stat-approved').textContent = statsResult.data.approved;
+                    document.getElementById('stat-rejected').textContent = statsResult.data.rejected;
                 }
+
+                // Load weekly schedule
+                await loadWeeklySchedule();
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // ==========================================
+        // LOAD WEEKLY SCHEDULE
+        // ==========================================
+        async function loadWeeklySchedule() {
+            document.getElementById('weekly-schedule-loader').style.display = 'block';
+            document.getElementById('weekly-schedule-container').style.display = 'none';
+
+            try {
+                // Get all approved bookings
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'getBookings',
+                        filterStatus: 'approved'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const bookings = result.data;
+                    
+                    // Group bookings by day of week and time
+                    const weekDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                    const dayIcons = ['☀️', '🌤️', '⛅', '🌥️', '🌦️', '🌧️'];
+                    const scheduleByDay = {};
+
+                    // Initialize schedule structure
+                    weekDays.forEach(day => {
+                        scheduleByDay[day] = [];
+                    });
+
+                    // Group bookings by day
+                    bookings.forEach(booking => {
+                        const date = new Date(booking.tgl_kirim);
+                        const dayIndex = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                        
+                        // Convert to Indonesian day (Monday = 0)
+                        let indonesianDayIndex = dayIndex - 1;
+                        if (indonesianDayIndex === -1) indonesianDayIndex = 6; // Sunday becomes 6
+                        
+                        // Only include Monday-Saturday (0-5)
+                        if (indonesianDayIndex >= 0 && indonesianDayIndex < 6) {
+                            const dayName = weekDays[indonesianDayIndex];
+                            scheduleByDay[dayName].push(booking);
+                        }
+                    });
+
+                    // Sort each day's bookings by time
+                    Object.keys(scheduleByDay).forEach(day => {
+                        scheduleByDay[day].sort((a, b) => {
+                            const timeA = a.jam_slot.split(' - ')[0];
+                            const timeB = b.jam_slot.split(' - ')[0];
+                            return timeA.localeCompare(timeB);
+                        });
+                    });
+
+                    // Render schedule
+                    const container = document.getElementById('weekly-schedule-container');
+                    container.innerHTML = '';
+
+                    weekDays.forEach((day, index) => {
+                        const dayCard = document.createElement('div');
+                        dayCard.className = 'day-card';
+
+                        const dayHeader = document.createElement('div');
+                        dayHeader.className = 'day-header';
+                        dayHeader.innerHTML = `<span class="day-icon">${dayIcons[index]}</span>${day}`;
+                        dayCard.appendChild(dayHeader);
+
+                        const bookingsForDay = scheduleByDay[day];
+                        
+                        if (bookingsForDay.length === 0) {
+                            const emptyDiv = document.createElement('div');
+                            emptyDiv.className = 'empty-day';
+                            emptyDiv.textContent = 'Tidak ada booking';
+                            dayCard.appendChild(emptyDiv);
+                        } else {
+                            bookingsForDay.forEach(booking => {
+                                const slotDiv = document.createElement('div');
+                                slotDiv.className = 'schedule-slot';
+                                slotDiv.innerHTML = `
+                                    <div class="slot-time">${booking.jam_slot}</div>
+                                    <div class="slot-supplier">${booking.supplier}</div>
+                                    <div class="slot-info">
+                                        <span class="slot-info-item">📦 Koli: ${booking.qty_koli}</span>
+                                        <span class="slot-info-item">📋 SKU: ${booking.qty_sku}</span>
+                                        <span class="slot-info-item">📅 ${booking.tgl_kirim}</span>
+                                    </div>
+                                `;
+                                dayCard.appendChild(slotDiv);
+                            });
+                        }
+
+                        container.appendChild(dayCard);
+                    });
+
+                    document.getElementById('weekly-schedule-loader').style.display = 'none';
+                    document.getElementById('weekly-schedule-container').style.display = 'grid';
+                }
+            } catch (error) {
+                console.error('Error loading weekly schedule:', error);
+                document.getElementById('weekly-schedule-loader').innerHTML = '<p style="color: #ef4444;">Error loading schedule</p>';
             }
         }
 
