@@ -434,6 +434,40 @@
             letter-spacing: 0.5px;
         }
 
+        /* ✅ NEW: Sortable Header Styles */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 30px;
+            transition: all 0.3s ease;
+        }
+
+        th.sortable:hover {
+            background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+            color: #ff8a00;
+        }
+
+        th.sortable::after {
+            content: '⇅';
+            position: absolute;
+            right: 10px;
+            opacity: 0.4;
+            font-size: 14px;
+        }
+
+        th.sortable.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+            color: #ff8a00;
+        }
+
+        th.sortable.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+            color: #ff8a00;
+        }
+
         td {
             padding: 16px;
             border-bottom: 1px solid #f7fafc;
@@ -845,11 +879,11 @@
                             <tr>
                                 <th>ID Booking</th>
                                 <th>No PO</th>
+                                <th>No. DO</th>
                                 <th>Supplier</th>
-                                <th>Tanggal Kirim</th>
+                                <th class="sortable sort-desc" onclick="sortTable(4)">Tanggal Kirim</th>
                                 <th>Jam Slot</th>
                                 <th>Qty Koli</th>
-                                <th>Qty SKU</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -955,12 +989,14 @@
         // ==========================================
         // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycby0ofcbiyVzGNo6_Bkqq_DW9SEKx-K5zDAqXpHRWjtcdr7qHFu_cBpT1Zwmt21OCfXF2w/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbydOXk0JU30N2S4IVY6gWHMwnc7AZmDypKQw_7KtBVqVX3AxAk9dBbk3hvT0EejNTc7lA/exec';
 
         let currentBooking = null;
         let currentTimeslot = null;
         let currentEditBooking = null;
         let allBookingsData = []; // Store all bookings for export
+        let currentSortColumn = 4; // Default: Tanggal Kirim (index 4)
+        let currentSortDirection = 'desc'; // Default: descending (terbaru di atas)
 
         // ==========================================
         // CHECK AUTH
@@ -1007,6 +1043,59 @@
             if (page === 'dashboard') loadDashboard();
             else if (page === 'bookings') loadBookings();
             else if (page === 'timeslots') loadTimeslots();
+        }
+
+        // ==========================================
+        // ✅ NEW: SORT TABLE FUNCTION
+        // ==========================================
+        function sortTable(columnIndex) {
+            const table = document.getElementById('bookings-table');
+            const tbody = document.getElementById('bookings-tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Remove empty row if exists
+            const filteredRows = rows.filter(row => row.cells.length > 1);
+            
+            if (filteredRows.length === 0) return;
+            
+            // Toggle sort direction
+            if (currentSortColumn === columnIndex) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = columnIndex;
+                currentSortDirection = 'desc'; // Default to descending for new column
+            }
+            
+            // Update header classes
+            const headers = table.querySelectorAll('th');
+            headers.forEach((th, index) => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (index === columnIndex) {
+                    th.classList.add(currentSortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+            
+            // Sort rows
+            filteredRows.sort((a, b) => {
+                let aValue = a.cells[columnIndex].textContent.trim();
+                let bValue = b.cells[columnIndex].textContent.trim();
+                
+                // Parse dates for comparison (YYYY-MM-DD format)
+                if (columnIndex === 4) { // Tanggal Kirim column
+                    aValue = new Date(aValue);
+                    bValue = new Date(bValue);
+                }
+                
+                if (currentSortDirection === 'asc') {
+                    return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+                } else {
+                    return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+                }
+            });
+            
+            // Re-append sorted rows
+            tbody.innerHTML = '';
+            filteredRows.forEach(row => tbody.appendChild(row));
         }
 
         // ==========================================
@@ -1122,7 +1211,7 @@
                                     <div class="slot-supplier">${booking.supplier}</div>
                                     <div class="slot-info">
                                         <span class="slot-info-item">📦 Koli: ${booking.qty_koli}</span>
-                                        <span class="slot-info-item">📋 SKU: ${booking.qty_sku}</span>
+                                        <span class="slot-info-item">📋 DO: ${booking.no_do || '-'}</span>
                                         <span class="slot-info-item">📅 ${booking.tgl_kirim}</span>
                                     </div>
                                 `;
@@ -1163,7 +1252,7 @@
         }
 
         // ==========================================
-        // LOAD BOOKINGS (UPDATED with Date Filter)
+        // ✅ LOAD BOOKINGS (UPDATED: Kolom Urutan + Sort by Tanggal)
         // ==========================================
         async function loadBookings(filterStatus = 'all', filterDateFrom = '', filterDateTo = '') {
             document.getElementById('bookings-loader').style.display = 'block';
@@ -1212,14 +1301,15 @@
                                 actionButtons = '<em style="color: #9ca3af;">Sudah diproses</em>';
                             }
 
+                            // ✅ PERUBAHAN: Urutan Kolom Baru (ID, No PO, No DO, Supplier, Tanggal, Jam, Qty Koli, Status, Action)
                             tr.innerHTML = `
                                 <td style="font-weight: 600;">${booking.id_booking}</td>
                                 <td>${booking.no_po}</td>
+                                <td>${booking.no_do || '-'}</td>
                                 <td>${booking.supplier}</td>
                                 <td>${booking.tgl_kirim}</td>
                                 <td>${booking.jam_slot}</td>
                                 <td>${booking.qty_koli}</td>
-                                <td>${booking.qty_sku}</td>
                                 <td>${statusBadge}</td>
                                 <td style="white-space: nowrap;">${actionButtons}</td>
                             `;
@@ -1229,6 +1319,11 @@
 
                     document.getElementById('bookings-loader').style.display = 'none';
                     document.getElementById('bookings-table').style.display = 'table';
+                    
+                    // ✅ NEW: Apply default sort (descending by Tanggal Kirim)
+                    if (result.data.length > 0) {
+                        sortTable(4); // Column index 4 = Tanggal Kirim
+                    }
                 }
             } catch (error) {
                 console.error('Error loading bookings:', error);
@@ -1245,15 +1340,15 @@
                 return;
             }
 
-            // Prepare data for Excel
+            // ✅ PERUBAHAN: Excel Export dengan urutan kolom baru
             const excelData = allBookingsData.map(booking => ({
                 'ID Booking': booking.id_booking,
                 'No PO': booking.no_po,
+                'No. DO': booking.no_do || '-',
                 'Supplier': booking.supplier,
                 'Tanggal Kirim': booking.tgl_kirim,
                 'Jam Slot': booking.jam_slot,
                 'Qty Koli': booking.qty_koli,
-                'Qty SKU': booking.qty_sku,
                 'Status': booking.status,
                 'Admin Note': booking.admin_note || '-'
             }));
@@ -1382,14 +1477,8 @@
             const newTglKirim = document.getElementById('edit-tgl-kirim').value;
             const newJamSlot = document.getElementById('edit-jam-slot-select').value;
 
-            if (!newTglKirim || !newJamSlot) {
-                alert('Mohon lengkapi tanggal dan jam slot');
-                return;
-            }
-
-            // Check if there's any change
-            if (newTglKirim === currentEditBooking.tgl_kirim && newJamSlot === currentEditBooking.jam_slot) {
-                alert('Tidak ada perubahan pada jadwal');
+            if (!newJamSlot) {
+                alert('Pilih jam slot terlebih dahulu');
                 return;
             }
 
@@ -1406,7 +1495,7 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Jadwal booking berhasil diupdate!');
+                    alert('Jadwal berhasil diupdate!');
                     closeModalEditSchedule();
                     applyFilter();
                 } else {
@@ -1423,7 +1512,7 @@
         }
 
         // ==========================================
-        // LOAD TIMESLOTS
+        // LOAD TIMESLOTS (ADMIN)
         // ==========================================
         async function loadTimeslots() {
             document.getElementById('timeslots-loader').style.display = 'block';
@@ -1448,7 +1537,7 @@
                             <td style="font-weight: 600;">${slot.jam_range}</td>
                             <td>${slot.kapasitas}</td>
                             <td>
-                                <button class="btn btn-primary" onclick='editCapacity(${JSON.stringify(slot)})'>Edit</button>
+                                <button class="btn btn-warning" onclick='editCapacity(${JSON.stringify(slot)})'>Edit</button>
                             </td>
                         `;
                         tbody.appendChild(tr);
@@ -1476,7 +1565,7 @@
         async function confirmCapacity() {
             const newCapacity = parseInt(document.getElementById('edit-capacity').value);
 
-            if (newCapacity < 1) {
+            if (!newCapacity || newCapacity < 1) {
                 alert('Kapasitas minimal 1');
                 return;
             }

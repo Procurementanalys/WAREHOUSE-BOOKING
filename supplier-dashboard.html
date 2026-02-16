@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Dashboard - Warehouse Booking</title>
+    
+    <!-- 🆕 BARCODE LIBRARY -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -296,6 +300,24 @@
             transform: none;
         }
 
+        /* 🆕 PRINT BUTTON */
+        .btn-print {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-print:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
         /* TABLE */
         .table-container {
             background: white;
@@ -402,6 +424,154 @@
             border-left: 4px solid #ef4444;
         }
 
+        /* 🆕 PRINT STYLES - LANDSCAPE & 1 HALAMAN SAJA */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                page-break-inside: avoid;
+            }
+            
+            /* Force semua konten dalam 1 halaman */
+            .booking-slip {
+                page-break-inside: avoid;
+                page-break-after: avoid;
+                page-break-before: avoid;
+            }
+        }
+
+        /* 🆕 BOOKING SLIP STYLES - COMPACT & 1 LEMBAR SAJA */
+        .booking-slip {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            padding: 12px 16px;
+            border: 2px solid #333;
+            page-break-inside: avoid;
+        }
+
+        .slip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #333;
+        }
+
+        .slip-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1a202c;
+        }
+
+        .slip-barcode {
+            text-align: right;
+        }
+
+        .slip-booking-no {
+            text-align: center;
+            margin: 12px 0;
+            padding: 10px;
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+        }
+
+        .slip-booking-no h2 {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .slip-booking-no h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a202c;
+        }
+
+        .slip-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .slip-detail-item {
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+
+        .slip-detail-label {
+            font-size: 10px;
+            color: #718096;
+            margin-bottom: 3px;
+            font-weight: 600;
+        }
+
+        .slip-detail-value {
+            font-size: 13px;
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        .slip-inbound {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .slip-inbound h3 {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+
+        .slip-inbound-table {
+            width: 100%;
+            border: 1px solid #333;
+        }
+
+        .slip-inbound-table th,
+        .slip-inbound-table td {
+            border: 1px solid #333;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .slip-inbound-table th {
+            background: #f7fafc;
+            font-weight: 700;
+        }
+
+        /* ✅ PERBAIKAN 2: Footer diperkecil dan simplified agar jadi 1 lembar */
+        .slip-footer {
+            margin-top: 8px;
+            text-align: center;
+            padding-top: 6px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .slip-footer p {
+            font-size: 9px;
+            color: #718096;
+            margin: 1px 0;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 1024px) {
             .sidebar {
@@ -453,6 +623,10 @@
             
             .timeslot-grid {
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .slip-details {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -509,8 +683,8 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Total SKU *</label>
-                                <input type="number" id="qty-sku" required min="1" placeholder="Jumlah SKU">
+                                <label>No. DO</label>
+                                <input type="text" id="no-do" placeholder="No. DO (Optional)">
                             </div>
 
                             <div class="form-group">
@@ -565,9 +739,10 @@
                                 <th>Tanggal Kirim</th>
                                 <th>Jam Slot</th>
                                 <th>Qty Koli</th>
-                                <th>Qty SKU</th>
+                                <th>No. DO</th>
                                 <th>Status</th>
                                 <th>Admin Note</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="history-tbody">
@@ -578,11 +753,16 @@
         </div>
     </div>
 
+    <!-- 🆕 HIDDEN PRINT AREA -->
+    <div id="print-area" style="display: none;">
+        <!-- Will be populated dynamically when printing -->
+    </div>
+
     <script>
         // ==========================================
         // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycby0ofcbiyVzGNo6_Bkqq_DW9SEKx-K5zDAqXpHRWjtcdr7qHFu_cBpT1Zwmt21OCfXF2w/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbydOXk0JU30N2S4IVY6gWHMwnc7AZmDypKQw_7KtBVqVX3AxAk9dBbk3hvT0EejNTc7lA/exec';
 
         let userData = null;
         let selectedSlot = null;
@@ -717,7 +897,8 @@
 
             const noPo = document.getElementById('no-po').value;
             const qtyKoli = parseInt(document.getElementById('qty-koli').value);
-            const qtySku = parseInt(document.getElementById('qty-sku').value);
+            const noDoValue = document.getElementById('no-do').value;
+            const noDo = noDoValue || null;  // Keep as string for No. DO
             const tglKirim = document.getElementById('tgl-kirim').value;
 
             document.getElementById('btn-submit').disabled = true;
@@ -731,7 +912,7 @@
                         no_po: noPo,
                         supplier: userData.nama_perusahaan || userData.username,
                         qty_koli: qtyKoli,
-                        qty_sku: qtySku,
+                        no_do: noDo,
                         tgl_kirim: tglKirim,
                         jam_slot: selectedSlot
                     })
@@ -741,6 +922,11 @@
                 
                 if (result.success) {
                     showAlert('✅ Booking berhasil dibuat! ID Booking: ' + result.data.id_booking, 'success');
+                    
+                    // 🆕 Auto-open print dialog
+                    if (confirm('Booking berhasil dibuat! Apakah Anda ingin print booking slip sekarang?')) {
+                        printBookingSlip(result.data);
+                    }
                     
                     // Reset form
                     document.getElementById('booking-form').reset();
@@ -782,7 +968,7 @@
                     tbody.innerHTML = '';
 
                     if (result.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color: #9ca3af; padding: 30px;">📭 Belum ada history booking</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #9ca3af; padding: 30px;">📭 Belum ada history booking</td></tr>';
                     } else {
                         result.data.forEach(booking => {
                             const tr = document.createElement('tr');
@@ -802,9 +988,14 @@
                                 <td>${booking.tgl_kirim}</td>
                                 <td>${booking.jam_slot}</td>
                                 <td>${booking.qty_koli}</td>
-                                <td>${booking.qty_sku}</td>
+                                <td>${booking.no_do || '-'}</td>
                                 <td>${statusBadge}</td>
                                 <td>${booking.admin_note || '-'}</td>
+                                <td>
+                                    <button class="btn-print" onclick='printBookingSlipFromHistory(${JSON.stringify(booking)})'>
+                                        🖨️ Print
+                                    </button>
+                                </td>
                             `;
                             tbody.appendChild(tr);
                         });
@@ -817,6 +1008,124 @@
                 console.error('Error loading history:', error);
                 alert('Error loading history');
             }
+        }
+
+        // ==========================================
+        // 🆕 PRINT BOOKING SLIP FUNCTION - ✅ 1 LEMBAR SAJA
+        // ==========================================
+        function printBookingSlip(bookingData) {
+            // Format tanggal untuk display
+            const tglKirimFormatted = formatDateIndonesia(bookingData.tgl_kirim);
+            const createdAt = bookingData.created_at || new Date().toLocaleString('id-ID');
+
+            // Generate barcode SVG
+            const barcodeId = 'barcode-' + Date.now();
+            
+            // ✅ PERBAIKAN 2: Layout diperkecil dan simplified jadi 1 lembar saja
+            const printHTML = `
+                <div class="booking-slip">
+                    <div class="slip-header">
+                        <div class="slip-title">WAREHOUSE BOOKING</div>
+                        <div class="slip-barcode">
+                            <svg id="${barcodeId}"></svg>
+                        </div>
+                    </div>
+
+                    <div class="slip-booking-no">
+                        <h2>BOOKING NO:</h2>
+                        <h1>${bookingData.id_booking}</h1>
+                    </div>
+
+                    <div class="slip-details">
+                        <div class="slip-detail-item">
+                            <div class="slip-detail-label">Warehouse</div>
+                            <div class="slip-detail-value">PT. APD PHARMA DISTRIBUTION</div>
+                        </div>
+                        <div class="slip-detail-item">
+                            <div class="slip-detail-label">Vendor</div>
+                            <div class="slip-detail-value">${bookingData.supplier}</div>
+                        </div>
+                        <div class="slip-detail-item">
+                            <div class="slip-detail-label">Date</div>
+                            <div class="slip-detail-value">${tglKirimFormatted}</div>
+                        </div>
+                        <div class="slip-detail-item">
+                            <div class="slip-detail-label">Time</div>
+                            <div class="slip-detail-value">${bookingData.jam_slot}</div>
+                        </div>
+                    </div>
+
+                    <div class="slip-inbound">
+                        <h3>Inbound Detail</h3>
+                        <table class="slip-inbound-table">
+                            <thead>
+                                <tr>
+                                    <th>PO No.</th>
+                                    <th>DO No.</th>
+                                    <th>Company</th>
+                                    <th>Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${bookingData.no_po}</td>
+                                    <td>${bookingData.no_do || '-'}</td>
+                                    <td>${bookingData.supplier}</td>
+                                    <td>${bookingData.qty_koli} koli</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="slip-footer">
+                        <p><strong>Created By:</strong> ${bookingData.supplier} | ${createdAt}</p>
+                    </div>
+                </div>
+            `;
+
+            // Set content
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = printHTML;
+            printArea.style.display = 'block';
+
+            // Generate barcode menggunakan JsBarcode
+            setTimeout(() => {
+                JsBarcode('#' + barcodeId, bookingData.id_booking, {
+                    format: 'CODE128',
+                    width: 1.5,
+                    height: 40,
+                    displayValue: true,
+                    fontSize: 11,
+                    margin: 2
+                });
+
+                // Print
+                window.print();
+
+                // Hide after print
+                setTimeout(() => {
+                    printArea.style.display = 'none';
+                }, 500);
+            }, 100);
+        }
+
+        // ==========================================
+        // 🆕 PRINT FROM HISTORY
+        // ==========================================
+        function printBookingSlipFromHistory(booking) {
+            printBookingSlip(booking);
+        }
+
+        // ==========================================
+        // 🆕 FORMAT DATE INDONESIA
+        // ==========================================
+        function formatDateIndonesia(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
         }
 
         // ==========================================
