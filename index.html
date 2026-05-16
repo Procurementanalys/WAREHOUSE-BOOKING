@@ -49,10 +49,13 @@
             box-shadow: 0 30px 90px rgba(0, 0, 0, 0.4), 0 0 1px rgba(255, 255, 255, 0.1);
             overflow: hidden;
             max-width: 440px;
+            max-height: 92vh;
             width: 100%;
             animation: slideUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             position: relative;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         @keyframes slideUp {
@@ -142,6 +145,8 @@
 
         .login-form {
             padding: 45px 35px;
+            overflow-y: auto;
+            flex: 1;
         }
 
         .form-section {
@@ -343,7 +348,25 @@
                 
                 <div class="form-group">
                     <label for="reg-password">Password <span class="required">*</span></label>
-                    <input type="password" id="reg-password" name="password" required placeholder="Buat password" minlength="6">
+                    <div style="position:relative;">
+                        <input type="password" id="reg-password" name="password" required
+                               placeholder="Minimal 6 karakter, huruf &amp; angka"
+                               oninput="validatePassword(this.value)"
+                               style="padding-right:44px; width:100%; box-sizing:border-box;">
+                        <button type="button" onclick="togglePassword()"
+                                style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
+                                       background:none; border:none; cursor:pointer; color:#9ca3af;
+                                       font-size:16px; padding:0; line-height:1;"
+                                id="toggle-pw-btn" title="Tampilkan password">&#128065;&#65039;</button>
+                    </div>
+                    <div id="pw-hint" style="margin-top:6px; font-size:12px; color:#6b7280;">
+                        &#128161; Minimal 6 karakter, harus mengandung huruf dan angka
+                    </div>
+                    <div id="pw-rules" style="margin-top:8px; display:none; font-size:12px; line-height:2;">
+                        <span id="rule-length"  style="color:#9ca3af; display:block;">&#10007; Minimal 6 karakter</span>
+                        <span id="rule-letter"  style="color:#9ca3af; display:block;">&#10007; Mengandung huruf (a-z)</span>
+                        <span id="rule-number"  style="color:#9ca3af; display:block;">&#10007; Mengandung angka (0-9)</span>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -369,7 +392,7 @@
         // ==========================================
         // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwHDZ1vneAqaNRfOxSB2yT-h3XCrE3AQqt3R7h_wqLPsdJPcz41aGIJyrkLbWjr3yzung/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycby97uqI0mmpGUdJ3Lq3WY9g9CvzZ2-TxUVcgLXXwyru9o3heGXKtFjUmXmqk3ztunOcGg/exec';
 
         // ==========================================
         // TAB SWITCHING
@@ -455,9 +478,12 @@
             const namaPerusahaan = document.getElementById('reg-nama-perusahaan').value;
             const email = document.getElementById('reg-email').value;
             
-            // Validasi password minimal 6 karakter
-            if (password.length < 6) {
-                showAlert('Password minimal 6 karakter', 'error');
+            // Validasi password: minimal 6 karakter + huruf + angka
+            const hasLetter = /[a-zA-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            if (password.length < 6 || !hasLetter || !hasNumber) {
+                showAlert('Password minimal 6 karakter dan harus mengandung huruf serta angka', 'error');
+                document.getElementById('reg-password').focus();
                 return;
             }
             
@@ -533,6 +559,60 @@
                 }
             }
         });
-    </script>
+    
+        // ==========================================
+        // VALIDASI PASSWORD REAL-TIME
+        // ==========================================
+        function validatePassword(val) {
+            const hint    = document.getElementById('pw-hint');
+            const rules   = document.getElementById('pw-rules');
+            const rLen    = document.getElementById('rule-length');
+            const rLetter = document.getElementById('rule-letter');
+            const rNum    = document.getElementById('rule-number');
+            const input   = document.getElementById('reg-password');
+
+            if (val.length === 0) {
+                hint.style.display  = 'block';
+                rules.style.display = 'none';
+                input.style.borderColor = '';
+                return;
+            }
+
+            hint.style.display  = 'none';
+            rules.style.display = 'block';
+
+            const okLen    = val.length >= 6;
+            const okLetter = /[a-zA-Z]/.test(val);
+            const okNum    = /[0-9]/.test(val);
+            const allOk    = okLen && okLetter && okNum;
+
+            rLen.textContent    = (okLen    ? '\u2713' : '\u2717') + ' Minimal 6 karakter';
+            rLetter.textContent = (okLetter ? '\u2713' : '\u2717') + ' Mengandung huruf (a-z)';
+            rNum.textContent    = (okNum    ? '\u2713' : '\u2717') + ' Mengandung angka (0-9)';
+
+            rLen.style.color    = okLen    ? '#059669' : '#dc2626';
+            rLetter.style.color = okLetter ? '#059669' : '#dc2626';
+            rNum.style.color    = okNum    ? '#059669' : '#dc2626';
+
+            input.style.borderColor = allOk ? '#059669' : '#dc2626';
+        }
+
+        // ==========================================
+        // TOGGLE SHOW/HIDE PASSWORD
+        // ==========================================
+        function togglePassword() {
+            const input = document.getElementById('reg-password');
+            const btn   = document.getElementById('toggle-pw-btn');
+            if (input.type === 'password') {
+                input.type   = 'text';
+                btn.innerHTML = '&#128683;'; // crossed eye
+                btn.title     = 'Sembunyikan password';
+            } else {
+                input.type   = 'password';
+                btn.innerHTML = '&#128065;&#65039;';
+                btn.title     = 'Tampilkan password';
+            }
+        }
+</script>
 </body>
 </html>
