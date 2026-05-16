@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supplier Dashboard - Warehouse Booking</title>
     
-    <!-- 🆕 BARCODE LIBRARY -->
+    <!-- BARCODE LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     
+    <!-- SheetJS untuk baca file Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -43,7 +46,6 @@
             gap: 12px;
         }
 
-        /* Logo Alpro di Navbar */
         .logo-alpro-navbar {
             height: 40px;
             width: auto;
@@ -138,14 +140,8 @@
         }
 
         @keyframes fadeIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(10px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .page-header {
@@ -212,7 +208,106 @@
             background: white;
         }
 
-        /* TIMESLOT PICKER (Cinema Style) */
+        /* TEMPLATE BUTTONS AREA */
+        .template-section {
+            background: linear-gradient(135deg, #f0f4ff 0%, #fff5e6 100%);
+            border: 2px dashed #c4b5fd;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .template-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .template-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 6px;
+        }
+
+        .template-info p {
+            font-size: 13px;
+            color: #718096;
+            line-height: 1.5;
+        }
+
+        .template-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-download-template {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-download-template:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-upload-template {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        .btn-upload-template:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4);
+        }
+
+        /* DIVIDER */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 28px 0;
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        /* TIMESLOT PICKER */
         .timeslot-picker {
             margin-top: 30px;
         }
@@ -300,7 +395,6 @@
             transform: none;
         }
 
-        /* 🆕 PRINT BUTTON */
         .btn-print {
             background: #10b981;
             color: white;
@@ -357,7 +451,6 @@
             background: #fafbfc;
         }
 
-        /* BADGE */
         .badge {
             display: inline-block;
             padding: 6px 14px;
@@ -368,20 +461,9 @@
             letter-spacing: 0.3px;
         }
 
-        .badge-pending {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .badge-approved {
-            background: #d1fae5;
-            color: #059669;
-        }
-
-        .badge-rejected {
-            background: #fee2e2;
-            color: #dc2626;
-        }
+        .badge-pending { background: #fef3c7; color: #d97706; }
+        .badge-approved { background: #d1fae5; color: #059669; }
+        .badge-rejected { background: #fee2e2; color: #dc2626; }
 
         /* LOADER */
         .loader {
@@ -424,36 +506,230 @@
             border-left: 4px solid #ef4444;
         }
 
-        /* 🆕 PRINT STYLES - LANDSCAPE & 1 HALAMAN SAJA */
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        /* ==========================================
+           MODAL BULK PREVIEW
+        ========================================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            padding: 36px;
+            max-width: 860px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .modal-header p {
+            font-size: 13px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .btn-close-modal {
+            background: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #64748b;
+            transition: 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-close-modal:hover {
+            background: #e2e8f0;
+        }
+
+        /* Date & Slot picker inside modal */
+        .modal-schedule {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 22px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .modal-schedule h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 14px;
+        }
+
+        .modal-schedule .form-row {
+            margin-bottom: 0;
+        }
+
+        /* Preview table in modal */
+        .preview-table-wrap {
+            overflow-x: auto;
+            margin-bottom: 22px;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+            font-size: 13px;
+        }
+
+        .preview-table th {
+            background: #1a1f36;
+            color: white;
+            padding: 12px 14px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .preview-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .preview-table tr:hover td {
+            background: #fafbfc;
+        }
+
+        .preview-table .row-error td {
+            background: #fff1f2;
+            color: #9f1239;
+        }
+
+        .row-num {
+            font-weight: 700;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancel-modal {
+            padding: 12px 28px;
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-cancel-modal:hover { background: #e2e8f0; }
+
+        .btn-submit-bulk {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #ff8a00 0%, #e52e71 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255,138,0,0.3);
+        }
+
+        .btn-submit-bulk:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255,138,0,0.4);
+        }
+
+        .btn-submit-bulk:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* BULK RESULT */
+        .bulk-result-list {
+            list-style: none;
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bulk-result-list li {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .bulk-result-list li.ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .bulk-result-list li.fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* TIMESLOT MODAL */
+        .modal-timeslot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        /* PRINT STYLES */
         @media print {
-            @page {
-                size: A4 landscape;
-                margin: 10mm;
-            }
-            
-            body * {
-                visibility: hidden;
-            }
-            #print-area, #print-area * {
-                visibility: visible;
-            }
+            @page { size: A4 landscape; margin: 10mm; }
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
             #print-area {
                 position: absolute;
-                left: 0;
-                top: 0;
+                left: 0; top: 0;
                 width: 100%;
                 page-break-inside: avoid;
             }
-            
-            /* Force semua konten dalam 1 halaman */
-            .booking-slip {
-                page-break-inside: avoid;
-                page-break-after: avoid;
-                page-break-before: avoid;
-            }
+            .booking-slip { page-break-inside: avoid; }
         }
 
-        /* 🆕 BOOKING SLIP STYLES - COMPACT & 1 LEMBAR SAJA */
+        /* BOOKING SLIP STYLES */
         .booking-slip {
             max-width: 100%;
             margin: 0;
@@ -472,15 +748,8 @@
             border-bottom: 2px solid #333;
         }
 
-        .slip-title {
-            font-size: 22px;
-            font-weight: 800;
-            color: #1a202c;
-        }
-
-        .slip-barcode {
-            text-align: right;
-        }
+        .slip-title { font-size: 22px; font-weight: 800; color: #1a202c; }
+        .slip-barcode { text-align: right; }
 
         .slip-booking-no {
             text-align: center;
@@ -490,17 +759,8 @@
             border: 2px solid #e2e8f0;
         }
 
-        .slip-booking-no h2 {
-            font-size: 11px;
-            color: #718096;
-            margin-bottom: 4px;
-        }
-
-        .slip-booking-no h1 {
-            font-size: 24px;
-            font-weight: 800;
-            color: #1a202c;
-        }
+        .slip-booking-no h2 { font-size: 11px; color: #718096; margin-bottom: 4px; }
+        .slip-booking-no h1 { font-size: 24px; font-weight: 800; color: #1a202c; }
 
         .slip-details {
             display: grid;
@@ -515,18 +775,8 @@
             border-radius: 6px;
         }
 
-        .slip-detail-label {
-            font-size: 10px;
-            color: #718096;
-            margin-bottom: 3px;
-            font-weight: 600;
-        }
-
-        .slip-detail-value {
-            font-size: 13px;
-            color: #1a202c;
-            font-weight: 600;
-        }
+        .slip-detail-label { font-size: 10px; color: #718096; margin-bottom: 3px; font-weight: 600; }
+        .slip-detail-value { font-size: 13px; color: #1a202c; font-weight: 600; }
 
         .slip-inbound {
             margin-top: 12px;
@@ -534,17 +784,9 @@
             border-top: 2px solid #e2e8f0;
         }
 
-        .slip-inbound h3 {
-            font-size: 11px;
-            color: #718096;
-            margin-bottom: 8px;
-        }
+        .slip-inbound h3 { font-size: 11px; color: #718096; margin-bottom: 8px; }
 
-        .slip-inbound-table {
-            width: 100%;
-            border: 1px solid #333;
-        }
-
+        .slip-inbound-table { width: 100%; border: 1px solid #333; }
         .slip-inbound-table th,
         .slip-inbound-table td {
             border: 1px solid #333;
@@ -552,13 +794,8 @@
             text-align: left;
             font-size: 12px;
         }
+        .slip-inbound-table th { background: #f7fafc; font-weight: 700; }
 
-        .slip-inbound-table th {
-            background: #f7fafc;
-            font-weight: 700;
-        }
-
-        /* ✅ PERBAIKAN 2: Footer diperkecil dan simplified agar jadi 1 lembar */
         .slip-footer {
             margin-top: 8px;
             text-align: center;
@@ -566,68 +803,22 @@
             border-top: 1px solid #e2e8f0;
         }
 
-        .slip-footer p {
-            font-size: 9px;
-            color: #718096;
-            margin: 1px 0;
-        }
+        .slip-footer p { font-size: 9px; color: #718096; margin: 1px 0; }
 
         /* RESPONSIVE */
-        @media (max-width: 1024px) {
-            .sidebar {
-                width: 240px;
-            }
-            
-            .main-content {
-                padding: 25px;
-            }
-        }
-
         @media (max-width: 768px) {
-            .navbar {
-                padding: 15px 20px;
-            }
-            
-            .navbar-brand {
-                font-size: 20px;
-            }
-
-            .logo-alpro-navbar {
-                height: 32px;
-            }
-            
-            .container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                padding: 20px 0;
-            }
-            
-            .menu-item {
-                padding: 15px 20px;
-            }
-            
-            .main-content {
-                padding: 20px;
-            }
-            
-            .form-card {
-                padding: 25px;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .timeslot-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            }
-
-            .slip-details {
-                grid-template-columns: 1fr;
-            }
+            .navbar { padding: 15px 20px; }
+            .navbar-brand { font-size: 20px; }
+            .logo-alpro-navbar { height: 32px; }
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; padding: 20px 0; }
+            .menu-item { padding: 15px 20px; }
+            .main-content { padding: 20px; }
+            .form-card { padding: 25px; }
+            .form-row { grid-template-columns: 1fr; }
+            .timeslot-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+            .slip-details { grid-template-columns: 1fr; }
+            .template-section { flex-direction: column; }
         }
     </style>
 </head>
@@ -658,6 +849,7 @@
 
         <!-- MAIN CONTENT -->
         <div class="main-content">
+
             <!-- NEW BOOKING PAGE -->
             <div id="new-booking-page" class="page-section active">
                 <div class="page-header">
@@ -668,6 +860,27 @@
                 <div class="form-card">
                     <div id="alert-booking" style="display: none;"></div>
 
+                    <!-- ===== TEMPLATE SECTION (BULK UPLOAD) ===== -->
+                    <div class="template-section">
+                        <div class="template-info">
+                            <h3>📦 Upload Banyak PO Sekaligus?</h3>
+                            <p>Download template Excel, isi daftar PO Anda, lalu upload kembali. Anda cukup pilih tanggal &amp; jam slot sekali untuk semua PO.</p>
+                        </div>
+                        <div class="template-buttons">
+                            <button class="btn-download-template" onclick="downloadTemplate()">
+                                ⬇️ Download Template
+                            </button>
+                            <button class="btn-upload-template" onclick="document.getElementById('upload-template-input').click()">
+                                ⬆️ Upload Template
+                            </button>
+                            <!-- Hidden file input -->
+                            <input type="file" id="upload-template-input" accept=".xlsx,.xls" style="display:none" onchange="handleTemplateUpload(event)">
+                        </div>
+                    </div>
+
+                    <div class="divider">ATAU INPUT MANUAL 1 PO</div>
+
+                    <!-- ===== FORM MANUAL ===== -->
                     <form id="booking-form">
                         <div class="form-row">
                             <div class="form-group">
@@ -697,16 +910,13 @@
                             <label style="font-weight: 600; color: #2d3748; margin-bottom: 12px; display: block; font-size: 14px;">
                                 Pilih Jam Slot *
                             </label>
-                            
+
                             <div id="timeslot-loader" class="loader" style="display: none;">
                                 <div class="loader-spin"></div>
                                 <p>Loading timeslots...</p>
                             </div>
 
-                            <div id="timeslot-grid" class="timeslot-grid">
-                                <!-- Will be populated dynamically -->
-                            </div>
-
+                            <div id="timeslot-grid" class="timeslot-grid"></div>
                             <input type="hidden" id="selected-timeslot" required>
                         </div>
 
@@ -745,27 +955,98 @@
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody id="history-tbody">
-                        </tbody>
+                        <tbody id="history-tbody"></tbody>
                     </table>
                 </div>
+            </div>
+
+        </div><!-- end main-content -->
+    </div><!-- end container -->
+
+    <!-- PRINT AREA -->
+    <div id="print-area" style="display: none;"></div>
+
+    <!-- ==========================================
+         MODAL BULK PREVIEW & SUBMIT
+    ========================================== -->
+    <div id="bulk-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <h2>📋 Preview Data Template</h2>
+                    <p id="bulk-modal-subtitle">Periksa data, pilih tanggal &amp; jam slot, lalu submit.</p>
+                </div>
+                <button class="btn-close-modal" onclick="closeBulkModal()">✕</button>
+            </div>
+
+            <div id="bulk-modal-body">
+                <!-- Schedule picker -->
+                <div class="modal-schedule">
+                    <h3>📅 Tanggal &amp; Jam Slot untuk semua PO ini</h3>
+                    <div class="form-row">
+                        <div class="form-group" style="margin-bottom:0">
+                            <label>Tanggal Kirim *</label>
+                            <input type="date" id="bulk-tgl-kirim" onchange="loadBulkTimeslots()">
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <label style="font-weight:600; font-size:14px; color:#2d3748; display:block; margin-bottom:10px;">Pilih Jam Slot *</label>
+                        <div id="bulk-timeslot-loader" class="loader" style="display:none;">
+                            <div class="loader-spin"></div>
+                            <p>Loading timeslots...</p>
+                        </div>
+                        <div id="bulk-timeslot-grid" class="modal-timeslot-grid"></div>
+                        <input type="hidden" id="bulk-selected-slot">
+                    </div>
+                </div>
+
+                <!-- Preview table -->
+                <div class="preview-table-wrap">
+                    <table class="preview-table" id="bulk-preview-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>No. PO</th>
+                                <th>Total Koli</th>
+                                <th>No. DO</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulk-preview-tbody"></tbody>
+                    </table>
+                </div>
+
+                <div id="bulk-alert" style="display:none;" class="alert"></div>
+            </div>
+
+            <!-- Result setelah submit -->
+            <div id="bulk-result-section" style="display:none;">
+                <h3 style="margin-bottom:12px; color:#1a202c;">✅ Hasil Submit Bulk Booking</h3>
+                <ul class="bulk-result-list" id="bulk-result-list"></ul>
+                <div style="margin-top:20px; text-align:right;">
+                    <button class="btn-cancel-modal" onclick="closeBulkModal()">Tutup</button>
+                </div>
+            </div>
+
+            <div id="bulk-modal-footer" class="modal-actions">
+                <button class="btn-cancel-modal" onclick="closeBulkModal()">Batal</button>
+                <button class="btn-submit-bulk" id="btn-submit-bulk" onclick="submitBulkBooking()">
+                    🚀 Submit Semua Booking
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- 🆕 HIDDEN PRINT AREA -->
-    <div id="print-area" style="display: none;">
-        <!-- Will be populated dynamically when printing -->
-    </div>
-
     <script>
         // ==========================================
-        // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
+        // KONFIGURASI
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycbydOXk0JU30N2S4IVY6gWHMwnc7AZmDypKQw_7KtBVqVX3AxAk9dBbk3hvT0EejNTc7lA/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxFROWcoZiOLnRTyyHvKVaDTsb_2jcXCVfg3i9yeJ4HOEurn9v5KU5HM3HPHFazR9aKww/exec';
 
         let userData = null;
         let selectedSlot = null;
+        let bulkData = [];         // Array of {no_po, qty_koli, no_do} dari template
+        let bulkSelectedSlot = null;
 
         // ==========================================
         // CHECK AUTH
@@ -786,33 +1067,24 @@
 
             document.getElementById('supplierName').textContent = userData.nama_perusahaan || userData.username;
 
-            // Set min date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('tgl-kirim').setAttribute('min', today);
+            document.getElementById('bulk-tgl-kirim').setAttribute('min', today);
         });
 
         // ==========================================
         // NAVIGATION
         // ==========================================
         function showPage(page) {
-            // Update menu active
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
-            });
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             event.target.classList.add('active');
-
-            // Update page
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
-            });
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
             document.getElementById(page + '-page').classList.add('active');
-
-            // Load data
             if (page === 'history') loadHistory();
         }
 
         // ==========================================
-        // LOAD AVAILABLE TIMESLOTS
+        // LOAD AVAILABLE TIMESLOTS (manual form)
         // ==========================================
         async function loadAvailableSlots() {
             const tanggal = document.getElementById('tgl-kirim').value;
@@ -826,66 +1098,90 @@
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({
-                        action: 'getTimeslots',
-                        tanggal: tanggal
-                    })
+                    body: JSON.stringify({ action: 'getTimeslots', tanggal })
                 });
-
                 const result = await response.json();
                 if (result.success) {
-                    const grid = document.getElementById('timeslot-grid');
-                    
-                    result.data.forEach(slot => {
-                        const div = document.createElement('div');
-                        div.className = 'timeslot-item';
-                        
-                        if (!slot.isAvailable) {
-                            div.classList.add('unavailable');
-                        }
-
-                        div.innerHTML = `
-                            <div class="timeslot-time">${slot.jam_range}</div>
-                            <div class="timeslot-capacity">
-                                ${slot.isAvailable ? 
-                                    `📍 ${slot.available}/${slot.kapasitas}` : 
-                                    '🔒 PENUH'}
-                            </div>
-                        `;
-
-                        if (slot.isAvailable) {
-                            div.onclick = () => selectTimeslot(slot, div);
-                        }
-
-                        grid.appendChild(div);
+                    renderTimeslotGrid('timeslot-grid', result.data, (slot) => {
+                        selectedSlot = slot.jam_range;
+                        document.getElementById('selected-timeslot').value = slot.jam_range;
                     });
-
-                    document.getElementById('timeslot-loader').style.display = 'none';
                 }
             } catch (error) {
-                console.error('Error loading timeslots:', error);
-                alert('Error loading timeslots');
+                alert('Error loading timeslots: ' + error.message);
+            } finally {
                 document.getElementById('timeslot-loader').style.display = 'none';
             }
         }
 
         // ==========================================
-        // SELECT TIMESLOT
+        // LOAD TIMESLOTS UNTUK BULK MODAL
+        // ==========================================
+        async function loadBulkTimeslots() {
+            const tanggal = document.getElementById('bulk-tgl-kirim').value;
+            if (!tanggal) return;
+
+            bulkSelectedSlot = null;
+            document.getElementById('bulk-selected-slot').value = '';
+            document.getElementById('bulk-timeslot-loader').style.display = 'block';
+            document.getElementById('bulk-timeslot-grid').innerHTML = '';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getTimeslots', tanggal })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    renderTimeslotGrid('bulk-timeslot-grid', result.data, (slot) => {
+                        bulkSelectedSlot = slot.jam_range;
+                        document.getElementById('bulk-selected-slot').value = slot.jam_range;
+                    });
+                }
+            } catch (error) {
+                alert('Error loading timeslots: ' + error.message);
+            } finally {
+                document.getElementById('bulk-timeslot-loader').style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // HELPER: RENDER TIMESLOT GRID
+        // ==========================================
+        function renderTimeslotGrid(containerId, slots, onSelect) {
+            const grid = document.getElementById(containerId);
+            grid.innerHTML = '';
+            slots.forEach(slot => {
+                const div = document.createElement('div');
+                div.className = 'timeslot-item' + (!slot.isAvailable ? ' unavailable' : '');
+                div.innerHTML = `
+                    <div class="timeslot-time">${slot.jam_range}</div>
+                    <div class="timeslot-capacity">
+                        ${slot.isAvailable ? `📍 ${slot.available}/${slot.kapasitas}` : '🔒 PENUH'}
+                    </div>`;
+                if (slot.isAvailable) {
+                    div.onclick = () => {
+                        grid.querySelectorAll('.timeslot-item').forEach(i => i.classList.remove('selected'));
+                        div.classList.add('selected');
+                        onSelect(slot);
+                    };
+                }
+                grid.appendChild(div);
+            });
+        }
+
+        // ==========================================
+        // SELECT TIMESLOT (manual form helper)
         // ==========================================
         function selectTimeslot(slot, element) {
-            // Remove previous selection
-            document.querySelectorAll('.timeslot-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-
-            // Add selection
+            document.querySelectorAll('.timeslot-item').forEach(i => i.classList.remove('selected'));
             element.classList.add('selected');
             selectedSlot = slot.jam_range;
             document.getElementById('selected-timeslot').value = slot.jam_range;
         }
 
         // ==========================================
-        // SUBMIT BOOKING
+        // SUBMIT MANUAL BOOKING
         // ==========================================
         document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -898,7 +1194,7 @@
             const noPo = document.getElementById('no-po').value;
             const qtyKoli = parseInt(document.getElementById('qty-koli').value);
             const noDoValue = document.getElementById('no-do').value;
-            const noDo = noDoValue || null;  // Keep as string for No. DO
+            const noDo = noDoValue || null;
             const tglKirim = document.getElementById('tgl-kirim').value;
 
             document.getElementById('btn-submit').disabled = true;
@@ -919,21 +1215,11 @@
                 });
 
                 const result = await response.json();
-                
                 if (result.success) {
-                    showAlert('✅ Booking berhasil dibuat! ID Booking: ' + result.data.id_booking, 'success');
-                    
-                    // 🆕 Auto-open print dialog
-                    if (confirm('Booking berhasil dibuat! Apakah Anda ingin print booking slip sekarang?')) {
-                        printBookingSlip(result.data);
-                    }
-                    
-                    // Reset form
+                    showAlert('✅ Booking berhasil dibuat! Booking Anda sedang menunggu persetujuan admin.', 'success');
                     document.getElementById('booking-form').reset();
                     document.getElementById('timeslot-grid').innerHTML = '';
                     selectedSlot = null;
-
-                    // Scroll to top
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
                     showAlert('❌ Error: ' + result.message, 'error');
@@ -945,6 +1231,296 @@
             document.getElementById('btn-submit').disabled = false;
             document.getElementById('btn-submit').textContent = '🚀 Submit Booking';
         });
+
+        // ==========================================
+        // DOWNLOAD TEMPLATE
+        // ==========================================
+        function downloadTemplate() {
+            // Build XLSX dinamis via SheetJS (tidak butuh file eksternal)
+            const wb = XLSX.utils.book_new();
+
+            // Sheet 1: Booking Template
+            const ws_data = [
+                ['TEMPLATE UPLOAD WAREHOUSE BOOKING'],
+                ['PETUNJUK: Isi semua kolom wajib (*). Satu baris = Satu PO. Hapus baris contoh sebelum upload.'],
+                ['No. PO *', 'Total Koli *', 'No. DO (Opsional)'],
+                ['PO-2025-001', 10, 'DO-001'],
+                ['PO-2025-002', 5, ''],
+                ['PO-2025-003', 8, 'DO-003'],
+                ['--- HAPUS BARIS CONTOH DI ATAS, ISI DATA ANDA DI BAWAH INI ---'],
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Style kolom
+            ws['!cols'] = [{ wch: 22 }, { wch: 15 }, { wch: 22 }];
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+                { s: { r: 6, c: 0 }, e: { r: 6, c: 2 } },
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Booking Template');
+
+            // Sheet 2: Info
+            const ws2_data = [
+                ['INFO PENGISIAN TEMPLATE'],
+                ['Kolom', 'Keterangan', 'Wajib?'],
+                ['No. PO', 'Nomor Purchase Order', 'YA'],
+                ['Total Koli', 'Jumlah koli (angka)', 'YA'],
+                ['No. DO', 'Nomor Delivery Order (boleh kosong)', 'TIDAK'],
+                [''],
+                ['CATATAN:'],
+                ['- Tanggal Kirim & Jam Slot dipilih di sistem saat upload'],
+                ['- Hapus baris contoh sebelum upload'],
+                ['- Maksimal 30 PO per upload'],
+            ];
+            const ws2 = XLSX.utils.aoa_to_sheet(ws2_data);
+            ws2['!cols'] = [{ wch: 20 }, { wch: 40 }, { wch: 12 }];
+            XLSX.utils.book_append_sheet(wb, ws2, 'Info');
+
+            XLSX.writeFile(wb, 'TEMPLATE_WH_BOOKING.xlsx');
+        }
+
+        // ==========================================
+        // HANDLE UPLOAD TEMPLATE
+        // ==========================================
+        function handleTemplateUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Reset input agar bisa upload file sama lagi
+            event.target.value = '';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    // Ambil sheet pertama
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+
+                    // Convert ke JSON, skip baris header (row 0)
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+                    // Parsing: cari baris header (mengandung "No. PO" atau "No PO")
+                    let headerRowIdx = -1;
+                    for (let i = 0; i < rows.length; i++) {
+                        const rowStr = rows[i].join('|').toLowerCase();
+                        if (rowStr.includes('no. po') || rowStr.includes('no po') || rowStr.includes('no_po')) {
+                            headerRowIdx = i;
+                            break;
+                        }
+                    }
+
+                    if (headerRowIdx === -1) {
+                        alert('❌ Format template tidak dikenali. Pastikan menggunakan template yang sudah disediakan.');
+                        return;
+                    }
+
+                    // Ambil header kolom
+                    const headerRow = rows[headerRowIdx].map(h => String(h).toLowerCase().trim());
+                    const colNoPo = headerRow.findIndex(h => h.includes('po'));
+                    const colQtyKoli = headerRow.findIndex(h => h.includes('koli') || h.includes('qty'));
+                    const colNoDo = headerRow.findIndex(h => h.includes('do'));
+
+                    if (colNoPo === -1 || colQtyKoli === -1) {
+                        alert('❌ Kolom "No. PO" atau "Total Koli" tidak ditemukan di template.');
+                        return;
+                    }
+
+                    // Ambil data (baris setelah header)
+                    const parsed = [];
+                    for (let i = headerRowIdx + 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        const noPo = String(row[colNoPo] || '').trim();
+                        const qtyKoli = String(row[colQtyKoli] || '').trim();
+                        const noDo = colNoDo !== -1 ? String(row[colNoDo] || '').trim() : '';
+
+                        // Skip baris kosong / baris instruksi
+                        if (!noPo || noPo.startsWith('---') || noPo.startsWith('HAPUS') || noPo.toLowerCase().includes('contoh')) continue;
+
+                        // Validasi
+                        const qty = parseInt(qtyKoli);
+                        const isValid = noPo && !isNaN(qty) && qty > 0;
+
+                        parsed.push({
+                            no_po: noPo,
+                            qty_koli: isNaN(qty) ? qtyKoli : qty,
+                            no_do: noDo || null,
+                            valid: isValid,
+                            error: !noPo ? 'No. PO kosong' : (isNaN(qty) || qty <= 0) ? 'Total Koli tidak valid' : null
+                        });
+                    }
+
+                    if (parsed.length === 0) {
+                        alert('❌ Tidak ada data PO yang ditemukan di file. Pastikan data diisi mulai dari baris setelah header.');
+                        return;
+                    }
+
+                    if (parsed.length > 30) {
+                        alert('⚠️ Maksimal 30 PO per upload. File Anda memiliki ' + parsed.length + ' baris. Mohon bagi dalam beberapa upload.');
+                        return;
+                    }
+
+                    // Tampilkan modal preview
+                    bulkData = parsed;
+                    openBulkModal(parsed);
+
+                } catch (err) {
+                    alert('❌ Gagal membaca file: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ==========================================
+        // OPEN BULK MODAL
+        // ==========================================
+        function openBulkModal(data) {
+            // Reset modal
+            document.getElementById('bulk-result-section').style.display = 'none';
+            document.getElementById('bulk-modal-body').style.display = 'block';
+            document.getElementById('bulk-modal-footer').style.display = 'flex';
+            document.getElementById('bulk-alert').style.display = 'none';
+            document.getElementById('bulk-tgl-kirim').value = '';
+            document.getElementById('bulk-timeslot-grid').innerHTML = '';
+            bulkSelectedSlot = null;
+            document.getElementById('bulk-selected-slot').value = '';
+
+            const validCount = data.filter(r => r.valid).length;
+            const invalidCount = data.filter(r => !r.valid).length;
+            document.getElementById('bulk-modal-subtitle').textContent =
+                `${data.length} PO terdeteksi (${validCount} valid${invalidCount > 0 ? ', ' + invalidCount + ' error' : ''})`;
+
+            // Render preview table
+            const tbody = document.getElementById('bulk-preview-tbody');
+            tbody.innerHTML = '';
+            data.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                if (!row.valid) tr.className = 'row-error';
+                tr.innerHTML = `
+                    <td class="row-num">${idx + 1}</td>
+                    <td>${row.no_po}</td>
+                    <td>${row.qty_koli}</td>
+                    <td>${row.no_do || '-'}</td>
+                    <td>${row.valid
+                        ? '<span style="color:#059669;font-weight:700;">✅ OK</span>'
+                        : `<span style="color:#dc2626;font-weight:700;">❌ ${row.error}</span>`
+                    }</td>`;
+                tbody.appendChild(tr);
+            });
+
+            // Min date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('bulk-tgl-kirim').setAttribute('min', today);
+
+            document.getElementById('bulk-modal').classList.add('open');
+        }
+
+        function closeBulkModal() {
+            document.getElementById('bulk-modal').classList.remove('open');
+            bulkData = [];
+            bulkSelectedSlot = null;
+        }
+
+        // ==========================================
+        // SUBMIT BULK BOOKING
+        // ==========================================
+        async function submitBulkBooking() {
+            const tglKirim = document.getElementById('bulk-tgl-kirim').value;
+            const bulkAlertEl = document.getElementById('bulk-alert');
+
+            if (!tglKirim) {
+                bulkAlertEl.textContent = '⚠️ Silakan pilih Tanggal Kirim terlebih dahulu.';
+                bulkAlertEl.className = 'alert alert-warning';
+                bulkAlertEl.style.display = 'block';
+                return;
+            }
+
+            if (!bulkSelectedSlot) {
+                bulkAlertEl.textContent = '⚠️ Silakan pilih Jam Slot terlebih dahulu.';
+                bulkAlertEl.className = 'alert alert-warning';
+                bulkAlertEl.style.display = 'block';
+                return;
+            }
+
+            const validRows = bulkData.filter(r => r.valid);
+            if (validRows.length === 0) {
+                bulkAlertEl.textContent = '❌ Tidak ada data yang valid untuk disubmit.';
+                bulkAlertEl.className = 'alert alert-error';
+                bulkAlertEl.style.display = 'block';
+                return;
+            }
+
+            // Konfirmasi
+            if (!confirm(`Akan submit ${validRows.length} booking pada:\nTanggal: ${tglKirim}\nJam Slot: ${bulkSelectedSlot}\n\nLanjutkan?`)) return;
+
+            const btn = document.getElementById('btn-submit-bulk');
+            btn.disabled = true;
+            btn.textContent = '⏳ Submitting...';
+            bulkAlertEl.style.display = 'none';
+
+            const results = [];
+            const supplierName = userData.nama_perusahaan || userData.username;
+
+            // Submit satu per satu (sequential agar ID booking urut)
+            for (const row of validRows) {
+                try {
+                    const resp = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'createBooking',
+                            no_po: row.no_po,
+                            supplier: supplierName,
+                            qty_koli: row.qty_koli,
+                            no_do: row.no_do || null,
+                            tgl_kirim: tglKirim,
+                            jam_slot: bulkSelectedSlot
+                        })
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        results.push({ row, success: true, id: result.data.id_booking });
+                    } else {
+                        results.push({ row, success: false, message: result.message });
+                    }
+                } catch (err) {
+                    results.push({ row, success: false, message: err.message });
+                }
+            }
+
+            // Tampilkan hasil
+            const resultList = document.getElementById('bulk-result-list');
+            resultList.innerHTML = '';
+            results.forEach(r => {
+                const li = document.createElement('li');
+                li.className = r.success ? 'ok' : 'fail';
+                li.textContent = r.success
+                    ? `✅ ${r.row.no_po} → Booking berhasil, menunggu persetujuan admin`
+                    : `❌ ${r.row.no_po} → Gagal: ${r.message}`;
+                resultList.appendChild(li);
+            });
+
+            const successCount = results.filter(r => r.success).length;
+            const failCount = results.filter(r => !r.success).length;
+
+            // Sembunyikan body & footer, tampilkan result
+            document.getElementById('bulk-modal-body').style.display = 'none';
+            document.getElementById('bulk-modal-footer').style.display = 'none';
+            document.getElementById('bulk-result-section').style.display = 'block';
+
+            btn.disabled = false;
+            btn.textContent = '🚀 Submit Semua Booking';
+
+            // Notifikasi di halaman utama
+            showAlert(
+                `✅ Bulk booking selesai! ${successCount} berhasil${failCount > 0 ? ', ' + failCount + ' gagal' : ''}.`,
+                successCount > 0 ? 'success' : 'error'
+            );
+        }
 
         // ==========================================
         // LOAD HISTORY
@@ -972,18 +1548,30 @@
                     } else {
                         result.data.forEach(booking => {
                             const tr = document.createElement('tr');
-                            
+                            const statusLower = booking.status.toLowerCase();
+                            const isApproved = statusLower === 'approved';
+
                             let statusBadge = '';
-                            if (booking.status.toLowerCase() === 'pending') {
+                            if (statusLower === 'pending') {
                                 statusBadge = '<span class="badge badge-pending">Pending</span>';
-                            } else if (booking.status.toLowerCase() === 'approved') {
+                            } else if (isApproved) {
                                 statusBadge = '<span class="badge badge-approved">Approved</span>';
-                            } else if (booking.status.toLowerCase() === 'rejected') {
+                            } else if (statusLower === 'rejected') {
                                 statusBadge = '<span class="badge badge-rejected">Rejected</span>';
                             }
 
+                            // ID Booking hanya tampil jika Approved
+                            const idBookingCell = isApproved
+                                ? `<span style="font-weight:700;">${booking.id_booking}</span>`
+                                : `<span style="color:#cbd5e0; font-size:13px; font-style:italic;">Menunggu persetujuan</span>`;
+
+                            // Tombol Print hanya tampil jika Approved
+                            const printCell = isApproved
+                                ? `<button class="btn-print" onclick='printBookingSlipFromHistory(${JSON.stringify(booking)})'>🖨️ Print</button>`
+                                : `<span style="color:#cbd5e0; font-size:12px;">—</span>`;
+
                             tr.innerHTML = `
-                                <td style="font-weight: 600;">${booking.id_booking}</td>
+                                <td>${idBookingCell}</td>
                                 <td>${booking.no_po}</td>
                                 <td>${booking.tgl_kirim}</td>
                                 <td>${booking.jam_slot}</td>
@@ -991,12 +1579,7 @@
                                 <td>${booking.no_do || '-'}</td>
                                 <td>${statusBadge}</td>
                                 <td>${booking.admin_note || '-'}</td>
-                                <td>
-                                    <button class="btn-print" onclick='printBookingSlipFromHistory(${JSON.stringify(booking)})'>
-                                        🖨️ Print
-                                    </button>
-                                </td>
-                            `;
+                                <td>${printCell}</td>`;
                             tbody.appendChild(tr);
                         });
                     }
@@ -1011,31 +1594,23 @@
         }
 
         // ==========================================
-        // 🆕 PRINT BOOKING SLIP FUNCTION - ✅ 1 LEMBAR SAJA
+        // PRINT BOOKING SLIP
         // ==========================================
         function printBookingSlip(bookingData) {
-            // Format tanggal untuk display
             const tglKirimFormatted = formatDateIndonesia(bookingData.tgl_kirim);
             const createdAt = bookingData.created_at || new Date().toLocaleString('id-ID');
-
-            // Generate barcode SVG
             const barcodeId = 'barcode-' + Date.now();
-            
-            // ✅ PERBAIKAN 2: Layout diperkecil dan simplified jadi 1 lembar saja
+
             const printHTML = `
                 <div class="booking-slip">
                     <div class="slip-header">
                         <div class="slip-title">WAREHOUSE BOOKING</div>
-                        <div class="slip-barcode">
-                            <svg id="${barcodeId}"></svg>
-                        </div>
+                        <div class="slip-barcode"><svg id="${barcodeId}"></svg></div>
                     </div>
-
                     <div class="slip-booking-no">
                         <h2>BOOKING NO:</h2>
                         <h1>${bookingData.id_booking}</h1>
                     </div>
-
                     <div class="slip-details">
                         <div class="slip-detail-item">
                             <div class="slip-detail-label">Warehouse</div>
@@ -1054,17 +1629,11 @@
                             <div class="slip-detail-value">${bookingData.jam_slot}</div>
                         </div>
                     </div>
-
                     <div class="slip-inbound">
                         <h3>Inbound Detail</h3>
                         <table class="slip-inbound-table">
                             <thead>
-                                <tr>
-                                    <th>PO No.</th>
-                                    <th>DO No.</th>
-                                    <th>Company</th>
-                                    <th>Qty</th>
-                                </tr>
+                                <tr><th>PO No.</th><th>DO No.</th><th>Company</th><th>Qty</th></tr>
                             </thead>
                             <tbody>
                                 <tr>
@@ -1076,75 +1645,48 @@
                             </tbody>
                         </table>
                     </div>
-
                     <div class="slip-footer">
                         <p><strong>Created By:</strong> ${bookingData.supplier} | ${createdAt}</p>
                     </div>
-                </div>
-            `;
+                </div>`;
 
-            // Set content
             const printArea = document.getElementById('print-area');
             printArea.innerHTML = printHTML;
             printArea.style.display = 'block';
 
-            // Generate barcode menggunakan JsBarcode
             setTimeout(() => {
                 JsBarcode('#' + barcodeId, bookingData.id_booking, {
-                    format: 'CODE128',
-                    width: 1.5,
-                    height: 40,
-                    displayValue: true,
-                    fontSize: 11,
-                    margin: 2
+                    format: 'CODE128', width: 1.5, height: 40,
+                    displayValue: true, fontSize: 11, margin: 2
                 });
-
-                // Print
                 window.print();
-
-                // Hide after print
-                setTimeout(() => {
-                    printArea.style.display = 'none';
-                }, 500);
+                setTimeout(() => { printArea.style.display = 'none'; }, 500);
             }, 100);
         }
 
-        // ==========================================
-        // 🆕 PRINT FROM HISTORY
-        // ==========================================
         function printBookingSlipFromHistory(booking) {
             printBookingSlip(booking);
         }
 
         // ==========================================
-        // 🆕 FORMAT DATE INDONESIA
+        // HELPER FUNCTIONS
         // ==========================================
         function formatDateIndonesia(dateStr) {
             if (!dateStr) return '-';
             const date = new Date(dateStr);
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}-${month}-${year}`;
+            return String(date.getDate()).padStart(2, '0') + '-' +
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                   date.getFullYear();
         }
 
-        // ==========================================
-        // HELPER FUNCTIONS
-        // ==========================================
         function showAlert(message, type) {
-            const alert = document.getElementById('alert-booking');
-            alert.textContent = message;
-            alert.className = 'alert alert-' + type;
-            alert.style.display = 'block';
-
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 6000);
+            const alertEl = document.getElementById('alert-booking');
+            alertEl.textContent = message;
+            alertEl.className = 'alert alert-' + type;
+            alertEl.style.display = 'block';
+            setTimeout(() => { alertEl.style.display = 'none'; }, 6000);
         }
 
-        // ==========================================
-        // LOGOUT
-        // ==========================================
         function logout() {
             if (confirm('Yakin ingin logout?')) {
                 localStorage.removeItem('userData');
