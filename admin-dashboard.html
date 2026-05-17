@@ -978,6 +978,10 @@
                     <option value="">Pilih tanggal terlebih dahulu</option>
                 </select>
             </div>
+            <div class="input-group">
+                <label>Alasan Perubahan Jadwal</label>
+                <textarea id="edit-alasan" rows="3" placeholder="Contoh: Kapasitas slot penuh, dipindah ke hari berikutnya..." style="width:100%; padding:10px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
+            </div>
             <div style="display: flex; gap: 12px; margin-top: 10px;">
                 <button class="btn btn-primary" onclick="closeModalEditSchedule()" style="flex: 1;">Batal</button>
                 <button class="btn btn-success" onclick="confirmEditSchedule()" style="flex: 1;">Update Jadwal</button>
@@ -989,7 +993,7 @@
         // ==========================================
         // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycby97uqI0mmpGUdJ3Lq3WY9g9CvzZ2-TxUVcgLXXwyru9o3heGXKtFjUmXmqk3ztunOcGg/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw6hvXLZ6JdIN_0aWNBJwvdKsaTboxx-XFaScxCRgDXNpk-I3l0Rbwga6147eFlS2u45A/exec';
 
         let currentBooking = null;
         let currentTimeslot = null;
@@ -1427,6 +1431,7 @@
             document.getElementById('edit-supplier').value = booking.supplier;
             document.getElementById('edit-tgl-kirim').value = booking.tgl_kirim;
             document.getElementById('edit-jam-slot-select').innerHTML = '<option value="">Loading...</option>';
+            document.getElementById('edit-alasan').value = '';
             document.getElementById('modal-edit-schedule').classList.add('active');
             
             // Load timeslots for current date
@@ -1475,7 +1480,8 @@
 
         async function confirmEditSchedule() {
             const newTglKirim = document.getElementById('edit-tgl-kirim').value;
-            const newJamSlot = document.getElementById('edit-jam-slot-select').value;
+            const newJamSlot  = document.getElementById('edit-jam-slot-select').value;
+            const alasan      = document.getElementById('edit-alasan').value.trim();
 
             if (!newJamSlot) {
                 alert('Pilih jam slot terlebih dahulu');
@@ -1486,16 +1492,24 @@
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({
-                        action: 'updateBookingSchedule',
-                        rowIndex: currentEditBooking.rowIndex,
-                        tgl_kirim: newTglKirim,
-                        jam_slot: newJamSlot
+                        action        : 'updateBookingSchedule',
+                        rowIndex      : currentEditBooking.rowIndex,
+                        tgl_kirim     : newTglKirim,
+                        jam_slot      : newJamSlot,
+                        alasan        : alasan,
+                        // Data lama untuk ditampilkan di email notifikasi
+                        old_tgl_kirim : currentEditBooking.tgl_kirim,
+                        old_jam_slot  : currentEditBooking.jam_slot,
+                        id_booking    : currentEditBooking.id_booking,
+                        no_po         : currentEditBooking.no_po,
+                        supplier      : currentEditBooking.supplier,
+                        qty_koli      : currentEditBooking.qty_koli
                     })
                 });
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Jadwal berhasil diupdate!');
+                    alert('Jadwal berhasil diupdate! Notifikasi email telah dikirim ke supplier.');
                     closeModalEditSchedule();
                     applyFilter();
                 } else {
@@ -1508,6 +1522,7 @@
 
         function closeModalEditSchedule() {
             document.getElementById('modal-edit-schedule').classList.remove('active');
+            document.getElementById('edit-alasan').value = '';
             currentEditBooking = null;
         }
 
