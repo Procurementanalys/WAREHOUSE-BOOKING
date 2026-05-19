@@ -898,7 +898,12 @@
             <div id="timeslots-page" class="page-section">
                 <div class="page-header">
                     <h1>Manage Timeslots</h1>
-                    <p>Atur kapasitas per jam slot</p>
+                    <p>Atur kapasitas dan jam slot — bisa tambah, edit, atau hapus slot</p>
+                </div>
+
+                <div class="action-bar" style="margin-bottom: 20px;">
+                    <span style="font-weight:600; color:#2d3748;">Total Timeslot: <span id="total-timeslots">0</span></span>
+                    <button class="btn btn-success" onclick="openModalAddTimeslot()" style="padding:12px 24px; font-size:14px;">➕ Tambah Jam Slot</button>
                 </div>
 
                 <div class="table-container">
@@ -937,13 +942,13 @@
         </div>
     </div>
 
-    <!-- MODAL EDIT CAPACITY -->
+    <!-- MODAL EDIT TIMESLOT (JAM + KAPASITAS) -->
     <div id="modal-capacity" class="modal">
         <div class="modal-content">
-            <div class="modal-header">Edit Kapasitas</div>
+            <div class="modal-header">Edit Timeslot</div>
             <div class="input-group">
-                <label>Jam Slot</label>
-                <input type="text" id="edit-jam-slot" readonly>
+                <label>Jam Slot <span style="color:#718096; font-weight:400;">(contoh: 09:00-10:00)</span></label>
+                <input type="text" id="edit-jam-slot" placeholder="contoh: 09:00-10:00">
             </div>
             <div class="input-group">
                 <label>Kapasitas Baru</label>
@@ -952,6 +957,37 @@
             <div style="display: flex; gap: 12px; margin-top: 10px;">
                 <button class="btn btn-primary" onclick="closeModalCapacity()" style="flex: 1;">Batal</button>
                 <button class="btn btn-success" onclick="confirmCapacity()" style="flex: 1;">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ADD TIMESLOT -->
+    <div id="modal-add-timeslot" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">➕ Tambah Jam Slot Baru</div>
+            <div class="input-group">
+                <label>Jam Slot <span style="color:#718096; font-weight:400;">(contoh: 14:00-15:00)</span></label>
+                <input type="text" id="add-jam-slot" placeholder="contoh: 14:00-15:00">
+            </div>
+            <div class="input-group">
+                <label>Kapasitas</label>
+                <input type="number" id="add-capacity" min="1" value="5">
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-primary" onclick="closeModalAddTimeslot()" style="flex: 1;">Batal</button>
+                <button class="btn btn-success" onclick="confirmAddTimeslot()" style="flex: 1;">Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRM DELETE TIMESLOT -->
+    <div id="modal-delete-timeslot" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="color:#dc2626;">⚠️ Hapus Timeslot</div>
+            <p style="color:#4a5568; margin-bottom:20px;">Yakin ingin menghapus jam slot <strong id="delete-jam-display"></strong>? Tindakan ini tidak bisa dibatalkan.</p>
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-primary" onclick="closeModalDeleteTimeslot()" style="flex: 1;">Batal</button>
+                <button class="btn btn-danger" onclick="confirmDeleteTimeslot()" style="flex: 1;">Hapus</button>
             </div>
         </div>
     </div>
@@ -993,7 +1029,7 @@
         // ==========================================
         // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw6hvXLZ6JdIN_0aWNBJwvdKsaTboxx-XFaScxCRgDXNpk-I3l0Rbwga6147eFlS2u45A/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw6mUoZx7hAiAfs5rNASHIFlGzN-mQZ28bFx1pL-FNReMZ0gADbfkoOs-x342eViN89Ww/exec';
 
         let currentBooking = null;
         let currentTimeslot = null;
@@ -1546,13 +1582,16 @@
                     const tbody = document.getElementById('timeslots-tbody');
                     tbody.innerHTML = '';
 
+                    document.getElementById('total-timeslots').textContent = result.data.length;
+
                     result.data.forEach(slot => {
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
                             <td style="font-weight: 600;">${slot.jam_range}</td>
                             <td>${slot.kapasitas}</td>
-                            <td>
-                                <button class="btn btn-warning" onclick='editCapacity(${JSON.stringify(slot)})'>Edit</button>
+                            <td style="white-space: nowrap;">
+                                <button class="btn btn-warning" onclick='editCapacity(${JSON.stringify(slot)})'>✏️ Edit</button>
+                                <button class="btn btn-danger" onclick='promptDeleteTimeslot(${JSON.stringify(slot)})'>🗑️ Hapus</button>
                             </td>
                         `;
                         tbody.appendChild(tr);
@@ -1568,7 +1607,7 @@
         }
 
         // ==========================================
-        // EDIT CAPACITY
+        // EDIT TIMESLOT (JAM SLOT + KAPASITAS)
         // ==========================================
         function editCapacity(slot) {
             currentTimeslot = slot;
@@ -1578,15 +1617,38 @@
         }
 
         async function confirmCapacity() {
+            const newJamSlot  = document.getElementById('edit-jam-slot').value.trim();
             const newCapacity = parseInt(document.getElementById('edit-capacity').value);
 
+            if (!newJamSlot) {
+                alert('Jam slot tidak boleh kosong');
+                return;
+            }
             if (!newCapacity || newCapacity < 1) {
                 alert('Kapasitas minimal 1');
                 return;
             }
 
             try {
-                const response = await fetch(API_URL, {
+                // Update jam range if changed
+                if (newJamSlot !== currentTimeslot.jam_range) {
+                    const jamRes = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'updateTimeslotJam',
+                            rowIndex: currentTimeslot.rowIndex,
+                            jam_range: newJamSlot
+                        })
+                    });
+                    const jamResult = await jamRes.json();
+                    if (!jamResult.success) {
+                        alert('Error update jam: ' + jamResult.message);
+                        return;
+                    }
+                }
+
+                // Update kapasitas
+                const capRes = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({
                         action: 'updateTimeslotCapacity',
@@ -1594,14 +1656,13 @@
                         kapasitas: newCapacity
                     })
                 });
-
-                const result = await response.json();
-                if (result.success) {
-                    alert('Kapasitas berhasil diupdate!');
+                const capResult = await capRes.json();
+                if (capResult.success) {
+                    alert('Timeslot berhasil diupdate!');
                     closeModalCapacity();
                     loadTimeslots();
                 } else {
-                    alert('Error: ' + result.message);
+                    alert('Error: ' + capResult.message);
                 }
             } catch (error) {
                 alert('Error: ' + error.message);
@@ -1611,6 +1672,92 @@
         function closeModalCapacity() {
             document.getElementById('modal-capacity').classList.remove('active');
             currentTimeslot = null;
+        }
+
+        // ==========================================
+        // ADD TIMESLOT
+        // ==========================================
+        function openModalAddTimeslot() {
+            document.getElementById('add-jam-slot').value = '';
+            document.getElementById('add-capacity').value = '5';
+            document.getElementById('modal-add-timeslot').classList.add('active');
+        }
+
+        function closeModalAddTimeslot() {
+            document.getElementById('modal-add-timeslot').classList.remove('active');
+        }
+
+        async function confirmAddTimeslot() {
+            const jamSlot  = document.getElementById('add-jam-slot').value.trim();
+            const kapasitas = parseInt(document.getElementById('add-capacity').value);
+
+            if (!jamSlot) {
+                alert('Jam slot tidak boleh kosong');
+                return;
+            }
+            if (!kapasitas || kapasitas < 1) {
+                alert('Kapasitas minimal 1');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'addTimeslot',
+                        jam_range: jamSlot,
+                        kapasitas: kapasitas
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Timeslot berhasil ditambahkan!');
+                    closeModalAddTimeslot();
+                    loadTimeslots();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // ==========================================
+        // DELETE TIMESLOT
+        // ==========================================
+        function promptDeleteTimeslot(slot) {
+            currentTimeslot = slot;
+            document.getElementById('delete-jam-display').textContent = slot.jam_range;
+            document.getElementById('modal-delete-timeslot').classList.add('active');
+        }
+
+        function closeModalDeleteTimeslot() {
+            document.getElementById('modal-delete-timeslot').classList.remove('active');
+            currentTimeslot = null;
+        }
+
+        async function confirmDeleteTimeslot() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'deleteTimeslot',
+                        rowIndex: currentTimeslot.rowIndex
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Timeslot berhasil dihapus!');
+                    closeModalDeleteTimeslot();
+                    loadTimeslots();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
         }
 
         // ==========================================
