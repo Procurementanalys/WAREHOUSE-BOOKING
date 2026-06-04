@@ -330,6 +330,12 @@
                 <div class="form-group">
                     <label for="login-password">Password <span class="required">*</span></label>
                     <input type="password" id="login-password" name="password" required placeholder="Masukkan password">
+                    <div style="text-align:right; margin-top:8px;">
+                        <a href="#" onclick="showForgotForm(); return false;"
+                           style="font-size:13px; color:#ff8a00; font-weight:600; text-decoration:none;">
+                            Lupa Password?
+                        </a>
+                    </div>
                 </div>
                 
                 <button type="submit" class="btn-submit">Login</button>
@@ -385,6 +391,30 @@
                     <div class="loader-spin"></div>
                 </div>
             </form>
+
+            <!-- LUPA PASSWORD FORM -->
+            <form id="forgotForm" class="form-section">
+                <div style="text-align:center; margin-bottom:20px;">
+                    <div style="font-size:48px; margin-bottom:10px;">🔑</div>
+                    <p style="color:#6b7280; font-size:14px; line-height:1.6;">
+                        Masukkan email yang terdaftar. Kami akan mengirimkan password Anda ke email tersebut.
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label for="forgot-email">Email Terdaftar <span class="required">*</span></label>
+                    <input type="email" id="forgot-email" name="email" required placeholder="email@perusahaan.com">
+                </div>
+                <button type="submit" class="btn-submit">Kirim Password ke Email</button>
+                <div class="loader" id="loader-forgot">
+                    <div class="loader-spin"></div>
+                </div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button type="button" onclick="document.querySelectorAll('.tab-button')[0].click()"
+                        style="background:none; border:none; color:#ff8a00; cursor:pointer; font-size:14px; font-weight:600;">
+                        ← Kembali ke Login
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -416,6 +446,13 @@
             }
 
             // Clear alert
+            hideAlert();
+        }
+
+        function showForgotForm() {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(form => form.classList.remove('active'));
+            document.getElementById('forgotForm').classList.add('active');
             hideAlert();
         }
 
@@ -525,6 +562,41 @@
         });
 
         // ==========================================
+        // LUPA PASSWORD HANDLER
+        // ==========================================
+        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('forgot-email').value.trim();
+
+            showLoader('forgot', true);
+            hideAlert();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'forgotPassword',
+                        email: email
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('✅ ' + result.message, 'success');
+                    document.getElementById('forgotForm').reset();
+                } else {
+                    showAlert('❌ ' + result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+
+            showLoader('forgot', false);
+        });
+
+        // ==========================================
         // HELPER FUNCTIONS
         // ==========================================
         function showAlert(message, type) {
@@ -540,7 +612,8 @@
 
         function showLoader(formType, show) {
             const loader = document.getElementById('loader-' + formType);
-            const btn = document.querySelector(`#${formType}Form .btn-submit`);
+            const formId = formType === 'forgot' ? 'forgotForm' : formType + 'Form';
+            const btn = document.querySelector(`#${formId} .btn-submit`);
             loader.style.display = show ? 'block' : 'none';
             btn.disabled = show;
         }
