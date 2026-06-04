@@ -772,6 +772,76 @@
                 width: 100%;
             }
         }
+        /* PAGINATION */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pagination-info {
+            color: #718096;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .pagination-info span {
+            color: #ff8a00;
+            font-weight: 700;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            color: #4a5568;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: #ff8a00;
+            color: #ff8a00;
+            background: #fff5e6;
+        }
+
+        .page-btn.active {
+            background: #ff8a00;
+            border-color: #ff8a00;
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-btn-nav {
+            width: auto;
+            padding: 0 14px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -920,6 +990,11 @@
                     </table>
                 </div>
             </div>
+            <!-- PAGINATION -->
+            <div class="pagination" id="pagination-bar" style="display:none;">
+                <div class="pagination-info" id="pagination-info"></div>
+                <div class="pagination-buttons" id="pagination-buttons"></div>
+            </div>
 
             <!-- TIMESLOTS PAGE -->
             <div id="timeslots-page" class="page-section">
@@ -1056,7 +1131,7 @@
         // ==========================================
         // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw8W2x81UQ2D1zkPOr-WMrs8G8F53xImSLzUrYPsQqkurrgUsZD0aNTEQF0-DEytXd4eQ/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw6mUoZx7hAiAfs5rNASHIFlGzN-mQZ28bFx1pL-FNReMZ0gADbfkoOs-x342eViN89Ww/exec';
 
         let currentBooking = null;
         let currentTimeslot = null;
@@ -1064,6 +1139,9 @@
         let allBookingsData = []; // Store all bookings for export
         let currentSortColumn = 4; // Default: Tanggal Kirim (index 4)
         let currentSortDirection = 'desc'; // Default: descending (terbaru di atas)
+        let currentPage = 1;
+        const ROWS_PER_PAGE = 20;
+        let filteredBookingsData = [];
 
         // ==========================================
         // CHECK AUTH
@@ -1116,24 +1194,18 @@
         // ✅ NEW: SORT TABLE FUNCTION
         // ==========================================
         function sortTable(columnIndex) {
-            const table = document.getElementById('bookings-table');
-            const tbody = document.getElementById('bookings-tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            
-            // Remove empty row if exists
-            const filteredRows = rows.filter(row => row.cells.length > 1);
-            
-            if (filteredRows.length === 0) return;
-            
+            if (filteredBookingsData.length === 0) return;
+
             // Toggle sort direction
             if (currentSortColumn === columnIndex) {
                 currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
             } else {
                 currentSortColumn = columnIndex;
-                currentSortDirection = 'desc'; // Default to descending for new column
+                currentSortDirection = 'desc';
             }
-            
+
             // Update header classes
+            const table = document.getElementById('bookings-table');
             const headers = table.querySelectorAll('th');
             headers.forEach((th, index) => {
                 th.classList.remove('sort-asc', 'sort-desc');
@@ -1141,28 +1213,20 @@
                     th.classList.add(currentSortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
                 }
             });
-            
-            // Sort rows
-            filteredRows.sort((a, b) => {
-                let aValue = a.cells[columnIndex].textContent.trim();
-                let bValue = b.cells[columnIndex].textContent.trim();
-                
-                // Parse dates for comparison (YYYY-MM-DD format)
-                if (columnIndex === 4) { // Tanggal Kirim column
-                    aValue = new Date(aValue);
-                    bValue = new Date(bValue);
-                }
-                
-                if (currentSortDirection === 'asc') {
-                    return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-                } else {
-                    return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-                }
+
+            // Column key map
+            const keyMap = {0:'id_booking', 1:'no_po', 2:'no_do', 3:'supplier', 4:'tgl_kirim', 5:'jam_slot', 6:'qty_koli', 7:'status'};
+            const key = keyMap[columnIndex];
+
+            filteredBookingsData.sort((a, b) => {
+                let aVal = a[key] || '';
+                let bVal = b[key] || '';
+                if (columnIndex === 4) { aVal = new Date(aVal); bVal = new Date(bVal); }
+                if (currentSortDirection === 'asc') return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                else return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
             });
-            
-            // Re-append sorted rows
-            tbody.innerHTML = '';
-            filteredRows.forEach(row => tbody.appendChild(row));
+
+            renderPage(1);
         }
 
         // ==========================================
@@ -1329,6 +1393,7 @@
         async function loadBookings(filterStatus = 'all', filterDateFrom = '', filterDateTo = '') {
             document.getElementById('bookings-loader').style.display = 'block';
             document.getElementById('bookings-table').style.display = 'none';
+            document.getElementById('pagination-bar').style.display = 'none';
 
             try {
                 const response = await fetch(API_URL, {
@@ -1344,63 +1409,124 @@
                 const result = await response.json();
                 if (result.success) {
                     allBookingsData = result.data; // Store for export
-                    const tbody = document.getElementById('bookings-tbody');
-                    tbody.innerHTML = '';
-
-                    if (result.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #9ca3af; padding: 30px;">📭 Tidak ada data sesuai filter</td></tr>';
-                    } else {
-                        result.data.forEach(booking => {
-                            const tr = document.createElement('tr');
-                            
-                            let statusBadge = '';
-                            if (booking.status.toLowerCase() === 'pending') {
-                                statusBadge = '<span class="badge badge-pending">Pending</span>';
-                            } else if (booking.status.toLowerCase() === 'approved') {
-                                statusBadge = '<span class="badge badge-approved">Approved</span>';
-                            } else if (booking.status.toLowerCase() === 'rejected') {
-                                statusBadge = '<span class="badge badge-rejected">Rejected</span>';
-                            }
-
-                            let actionButtons = '';
-                            if (booking.status.toLowerCase() === 'pending') {
-                                actionButtons = `
-                                    <button class="btn btn-success" onclick='approveBooking(${JSON.stringify(booking)})'>Approve</button>
-                                    <button class="btn btn-danger" onclick='rejectBooking(${JSON.stringify(booking)})'>Reject</button>
-                                    <button class="btn btn-warning" onclick='editSchedule(${JSON.stringify(booking)})'>Edit</button>
-                                `;
-                            } else {
-                                actionButtons = '<em style="color: #9ca3af;">Sudah diproses</em>';
-                            }
-
-                            // ✅ PERUBAHAN: Urutan Kolom Baru (ID, No PO, No DO, Supplier, Tanggal, Jam, Qty Koli, Status, Action)
-                            tr.innerHTML = `
-                                <td style="font-weight: 600;">${booking.id_booking}</td>
-                                <td>${booking.no_po}</td>
-                                <td>${booking.no_do || '-'}</td>
-                                <td>${booking.supplier}</td>
-                                <td>${booking.tgl_kirim}</td>
-                                <td>${booking.jam_slot}</td>
-                                <td>${booking.qty_koli}</td>
-                                <td>${statusBadge}</td>
-                                <td style="white-space: nowrap;">${actionButtons}</td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    }
+                    filteredBookingsData = result.data;
+                    currentPage = 1;
 
                     document.getElementById('bookings-loader').style.display = 'none';
                     document.getElementById('bookings-table').style.display = 'table';
-                    
-                    // ✅ NEW: Apply default sort (descending by Tanggal Kirim)
+
+                    // Apply default sort (descending by Tanggal Kirim)
                     if (result.data.length > 0) {
-                        sortTable(4); // Column index 4 = Tanggal Kirim
+                        sortTable(4);
+                    } else {
+                        renderPage(1);
                     }
                 }
             } catch (error) {
                 console.error('Error loading bookings:', error);
                 alert('Error loading bookings');
             }
+        }
+
+        // ==========================================
+        // RENDER PAGE (PAGINATION)
+        // ==========================================
+        function renderPage(page) {
+            currentPage = page;
+            const tbody = document.getElementById('bookings-tbody');
+            tbody.innerHTML = '';
+
+            const data = filteredBookingsData;
+            const totalPages = Math.ceil(data.length / ROWS_PER_PAGE);
+            const start = (page - 1) * ROWS_PER_PAGE;
+            const end = Math.min(start + ROWS_PER_PAGE, data.length);
+            const pageData = data.slice(start, end);
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #9ca3af; padding: 30px;">📭 Tidak ada data sesuai filter</td></tr>';
+                document.getElementById('pagination-bar').style.display = 'none';
+                return;
+            }
+
+            pageData.forEach(booking => {
+                const tr = document.createElement('tr');
+
+                let statusBadge = '';
+                if (booking.status.toLowerCase() === 'pending') {
+                    statusBadge = '<span class="badge badge-pending">Pending</span>';
+                } else if (booking.status.toLowerCase() === 'approved') {
+                    statusBadge = '<span class="badge badge-approved">Approved</span>';
+                } else if (booking.status.toLowerCase() === 'rejected') {
+                    statusBadge = '<span class="badge badge-rejected">Rejected</span>';
+                }
+
+                let actionButtons = '';
+                if (booking.status.toLowerCase() === 'pending') {
+                    actionButtons = `
+                        <button class="btn btn-success" onclick='approveBooking(${JSON.stringify(booking)})'>Approve</button>
+                        <button class="btn btn-danger" onclick='rejectBooking(${JSON.stringify(booking)})'>Reject</button>
+                        <button class="btn btn-warning" onclick='editSchedule(${JSON.stringify(booking)})'>Edit</button>
+                    `;
+                } else {
+                    actionButtons = '<em style="color: #9ca3af;">Sudah diproses</em>';
+                }
+
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${booking.id_booking}</td>
+                    <td>${booking.no_po}</td>
+                    <td>${booking.no_do || '-'}</td>
+                    <td>${booking.supplier}</td>
+                    <td>${booking.tgl_kirim}</td>
+                    <td>${booking.jam_slot}</td>
+                    <td>${booking.qty_koli}</td>
+                    <td>${statusBadge}</td>
+                    <td style="white-space: nowrap;">${actionButtons}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update pagination info
+            document.getElementById('pagination-info').innerHTML =
+                `Menampilkan <span>${start + 1}–${end}</span> dari <span>${data.length}</span> data`;
+
+            // Build page buttons
+            const btnContainer = document.getElementById('pagination-buttons');
+            btnContainer.innerHTML = '';
+
+            // Prev button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn page-btn-nav';
+            prevBtn.textContent = '‹';
+            prevBtn.disabled = page === 1;
+            prevBtn.onclick = () => renderPage(page - 1);
+            btnContainer.appendChild(prevBtn);
+
+            // Page number buttons (show max 5 around current)
+            const range = 2;
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - range && i <= page + range)) {
+                    const btn = document.createElement('button');
+                    btn.className = 'page-btn' + (i === page ? ' active' : '');
+                    btn.textContent = i;
+                    btn.onclick = (function(p) { return () => renderPage(p); })(i);
+                    btnContainer.appendChild(btn);
+                } else if (i === page - range - 1 || i === page + range + 1) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '…';
+                    dots.style.cssText = 'padding: 0 4px; color: #9ca3af;';
+                    btnContainer.appendChild(dots);
+                }
+            }
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn page-btn-nav';
+            nextBtn.textContent = '›';
+            nextBtn.disabled = page === totalPages;
+            nextBtn.onclick = () => renderPage(page + 1);
+            btnContainer.appendChild(nextBtn);
+
+            document.getElementById('pagination-bar').style.display = 'flex';
         }
 
         // ==========================================
