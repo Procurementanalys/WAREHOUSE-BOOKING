@@ -397,14 +397,14 @@
                 <div style="text-align:center; margin-bottom:20px;">
                     <div style="font-size:48px; margin-bottom:10px;">🔑</div>
                     <p style="color:#6b7280; font-size:14px; line-height:1.6;">
-                        Masukkan email yang terdaftar. Kami akan mengirimkan password Anda ke email tersebut.
+                        Masukkan email yang terdaftar. Kami akan mengirimkan <strong>link reset password</strong> ke email Anda. Link berlaku selama <strong>1 jam</strong>.
                     </p>
                 </div>
                 <div class="form-group">
                     <label for="forgot-email">Email Terdaftar <span class="required">*</span></label>
                     <input type="email" id="forgot-email" name="email" required placeholder="email@perusahaan.com">
                 </div>
-                <button type="submit" class="btn-submit">Kirim Password ke Email</button>
+                <button type="submit" class="btn-submit">Kirim Link Reset Password</button>
                 <div class="loader" id="loader-forgot">
                     <div class="loader-spin"></div>
                 </div>
@@ -413,6 +413,46 @@
                         style="background:none; border:none; color:#ff8a00; cursor:pointer; font-size:14px; font-weight:600;">
                         ← Kembali ke Login
                     </button>
+                </div>
+            </form>
+
+            <!-- RESET PASSWORD FORM (muncul via token di URL) -->
+            <form id="resetForm" class="form-section">
+                <div style="text-align:center; margin-bottom:20px;">
+                    <div style="font-size:48px; margin-bottom:10px;">🔒</div>
+                    <h3 style="color:#2d3748; font-size:18px; font-weight:700; margin-bottom:8px;">Buat Password Baru</h3>
+                    <p style="color:#6b7280; font-size:14px; line-height:1.6;">
+                        Masukkan password baru Anda di bawah ini.
+                    </p>
+                </div>
+                <input type="hidden" id="reset-token" name="token">
+                <div class="form-group">
+                    <label for="reset-password">Password Baru <span class="required">*</span></label>
+                    <div style="position:relative;">
+                        <input type="password" id="reset-password" name="newPassword" required
+                               placeholder="Minimal 6 karakter, huruf &amp; angka"
+                               oninput="validateResetPassword(this.value)"
+                               style="padding-right:44px; width:100%; box-sizing:border-box;">
+                        <button type="button" onclick="toggleResetPassword()"
+                                style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
+                                       background:none; border:none; cursor:pointer; color:#9ca3af;
+                                       font-size:16px; padding:0; line-height:1;"
+                                id="toggle-reset-pw-btn" title="Tampilkan password">&#128065;&#65039;</button>
+                    </div>
+                    <div id="reset-pw-rules" style="margin-top:8px; display:none; font-size:12px; line-height:2;">
+                        <span id="reset-rule-length"  style="color:#9ca3af; display:block;">&#10007; Minimal 6 karakter</span>
+                        <span id="reset-rule-letter"  style="color:#9ca3af; display:block;">&#10007; Mengandung huruf (a-z)</span>
+                        <span id="reset-rule-number"  style="color:#9ca3af; display:block;">&#10007; Mengandung angka (0-9)</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reset-password-confirm">Konfirmasi Password <span class="required">*</span></label>
+                    <input type="password" id="reset-password-confirm" name="newPasswordConfirm" required
+                           placeholder="Ulangi password baru">
+                </div>
+                <button type="submit" class="btn-submit" id="btn-reset-submit">Simpan Password Baru</button>
+                <div class="loader" id="loader-reset">
+                    <div class="loader-spin"></div>
                 </div>
             </form>
         </div>
@@ -597,6 +637,110 @@
         });
 
         // ==========================================
+        // RESET PASSWORD HANDLER
+        // ==========================================
+        document.getElementById('resetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const token           = document.getElementById('reset-token').value;
+            const newPassword     = document.getElementById('reset-password').value;
+            const confirmPassword = document.getElementById('reset-password-confirm').value;
+
+            if (newPassword !== confirmPassword) {
+                showAlert('❌ Password dan konfirmasi password tidak cocok', 'error');
+                return;
+            }
+
+            const hasLetter = /[a-zA-Z]/.test(newPassword);
+            const hasNumber = /[0-9]/.test(newPassword);
+            if (newPassword.length < 6 || !hasLetter || !hasNumber) {
+                showAlert('❌ Password minimal 6 karakter dan harus mengandung huruf serta angka', 'error');
+                return;
+            }
+
+            showLoader('reset', true);
+            hideAlert();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'resetPassword',
+                        token: token,
+                        newPassword: newPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('✅ ' + result.message, 'success');
+                    document.getElementById('resetForm').reset();
+                    // Redirect ke login setelah 2 detik
+                    setTimeout(() => {
+                        // Hapus token dari URL lalu tampilkan form login
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        document.querySelectorAll('.tab-button')[0].click();
+                    }, 2500);
+                } else {
+                    showAlert('❌ ' + result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'error');
+            }
+
+            showLoader('reset', false);
+        });
+
+        // ==========================================
+        // VALIDASI PASSWORD RESET REAL-TIME
+        // ==========================================
+        function validateResetPassword(val) {
+            const rules   = document.getElementById('reset-pw-rules');
+            const rLen    = document.getElementById('reset-rule-length');
+            const rLetter = document.getElementById('reset-rule-letter');
+            const rNum    = document.getElementById('reset-rule-number');
+            const input   = document.getElementById('reset-password');
+
+            if (val.length === 0) {
+                rules.style.display = 'none';
+                input.style.borderColor = '';
+                return;
+            }
+
+            rules.style.display = 'block';
+
+            const okLen    = val.length >= 6;
+            const okLetter = /[a-zA-Z]/.test(val);
+            const okNum    = /[0-9]/.test(val);
+            const allOk    = okLen && okLetter && okNum;
+
+            rLen.textContent    = (okLen    ? '✓' : '✗') + ' Minimal 6 karakter';
+            rLetter.textContent = (okLetter ? '✓' : '✗') + ' Mengandung huruf (a-z)';
+            rNum.textContent    = (okNum    ? '✓' : '✗') + ' Mengandung angka (0-9)';
+
+            rLen.style.color    = okLen    ? '#059669' : '#dc2626';
+            rLetter.style.color = okLetter ? '#059669' : '#dc2626';
+            rNum.style.color    = okNum    ? '#059669' : '#dc2626';
+
+            input.style.borderColor = allOk ? '#059669' : '#dc2626';
+        }
+
+        function toggleResetPassword() {
+            const input = document.getElementById('reset-password');
+            const btn   = document.getElementById('toggle-reset-pw-btn');
+            if (input.type === 'password') {
+                input.type    = 'text';
+                btn.innerHTML = '&#128683;';
+                btn.title     = 'Sembunyikan password';
+            } else {
+                input.type    = 'password';
+                btn.innerHTML = '&#128065;&#65039;';
+                btn.title     = 'Tampilkan password';
+            }
+        }
+
+        // ==========================================
         // HELPER FUNCTIONS
         // ==========================================
         function showAlert(message, type) {
@@ -612,7 +756,10 @@
 
         function showLoader(formType, show) {
             const loader = document.getElementById('loader-' + formType);
-            const formId = formType === 'forgot' ? 'forgotForm' : formType + 'Form';
+            let formId;
+            if (formType === 'forgot')  formId = 'forgotForm';
+            else if (formType === 'reset') formId = 'resetForm';
+            else formId = formType + 'Form';
             const btn = document.querySelector(`#${formId} .btn-submit`);
             loader.style.display = show ? 'block' : 'none';
             btn.disabled = show;
@@ -622,6 +769,19 @@
         // CHECK IF ALREADY LOGGED IN
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
+            // Cek token reset password di URL (?token=xxx)
+            const urlParams = new URLSearchParams(window.location.search);
+            const resetToken = urlParams.get('token');
+
+            if (resetToken) {
+                // Tampilkan form reset password
+                document.getElementById('reset-token').value = resetToken;
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.form-section').forEach(form => form.classList.remove('active'));
+                document.getElementById('resetForm').classList.add('active');
+                return; // Jangan cek login jika sedang reset password
+            }
+
             const userData = localStorage.getItem('userData');
             if (userData) {
                 const user = JSON.parse(userData);
