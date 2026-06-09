@@ -45,8 +45,59 @@
         .logo-alpro-navbar {
             height: 40px;
             width: auto;
-            
         }
+
+        /* Logo fallback */
+        .logo-fallback {
+            display: none;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ff8a00, #ff6b00);
+            border-radius: 10px;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+            flex-shrink: 0;
+        }
+
+        /* Hamburger Toggle */
+        .hamburger-btn {
+            width: 38px;
+            height: 38px;
+            background: rgba(255,255,255,0.12);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            border-radius: 9px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .hamburger-btn:hover {
+            background: rgba(255,138,0,0.35);
+            border-color: #ff8a00;
+        }
+
+        .hamburger-btn span {
+            display: block;
+            width: 16px;
+            height: 2px;
+            background: white;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+
+        .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
         .navbar-user {
             display: flex;
@@ -80,10 +131,30 @@
         }
 
         .sidebar {
-            width: 280px;
+            width: 260px;
             background: white;
             box-shadow: 4px 0 15px rgba(0,0,0,0.08);
             padding: 35px 0;
+            flex-shrink: 0;
+            overflow: hidden;
+            transition: width 0.3s cubic-bezier(0.4,0,0.2,1),
+                        padding 0.3s cubic-bezier(0.4,0,0.2,1),
+                        opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            padding: 0;
+            opacity: 0;
+        }
+
+        .sidebar.collapsed .menu-item {
+            pointer-events: none;
+        }
+
+        .menu-label {
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .menu-item {
@@ -103,9 +174,35 @@
             font-size: 22px;
         }
 
-        .menu-item:nth-child(1)::before { content: '📊'; }
+        .menu-item:nth-child(1)::before { content: '🏠'; }
         .menu-item:nth-child(2)::before { content: '📋'; }
         .menu-item:nth-child(3)::before { content: '⏰'; }
+
+        /* BADGE PENDING */
+        .menu-badge {
+            margin-left: auto;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            min-width: 22px;
+            text-align: center;
+            display: none;
+        }
+        .menu-badge.show { display: inline-block; }
+
+        /* SUBMITTED AT badge */
+        .badge-submitted {
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
 
         .menu-item:hover {
             background: #f7fafc;
@@ -842,17 +939,659 @@
             padding: 0 14px;
             font-size: 18px;
         }
+
+        /* FILTER ITEMS */
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #718096;
+        }
+
+        .filter-input {
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 13px;
+            min-width: 180px;
+            background: #fafbfc;
+            color: #2d3748;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #ff8a00;
+            box-shadow: 0 0 0 3px rgba(255,138,0,0.1);
+            background: white;
+        }
+
+        .filter-select {
+            padding: 10px 36px 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 13px;
+            min-width: 160px;
+            background: #fafbfc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center;
+            appearance: none;
+            -webkit-appearance: none;
+            color: #2d3748;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #ff8a00;
+            box-shadow: 0 0 0 3px rgba(255,138,0,0.1);
+            background-color: white;
+        }
+
+        .filter-select:hover {
+            border-color: #ff8a00;
+        }
+
+        /* ==========================================
+           DARK MODE
+        ========================================== */
+        body.dark-mode {
+            background: #0f1117;
+            color: #e2e8f0;
+        }
+        body.dark-mode .sidebar {
+            background: #1a1f2e;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        }
+        body.dark-mode .menu-item {
+            color: #a0aec0;
+        }
+        body.dark-mode .menu-item:hover {
+            background: #252d3d;
+            color: #e2e8f0;
+        }
+        body.dark-mode .menu-item.active {
+            background: linear-gradient(90deg, #2a2010 0%, #1a1f2e 100%);
+            color: #ff8a00;
+        }
+        body.dark-mode .main-content {
+            background: #0f1117;
+        }
+        body.dark-mode .page-header h1 {
+            color: #f7fafc;
+        }
+        body.dark-mode .stat-card:nth-child(1),
+        body.dark-mode .stat-card:nth-child(2),
+        body.dark-mode .stat-card:nth-child(3),
+        body.dark-mode .stat-card:nth-child(4) {
+            /* keep gradient colors but adjust */
+        }
+        body.dark-mode .action-bar,
+        body.dark-mode .table-container,
+        body.dark-mode .day-card,
+        body.dark-mode .modal-content,
+        body.dark-mode .pagination,
+        body.dark-mode .chart-card,
+        body.dark-mode .activity-feed-card,
+        body.dark-mode .quick-actions-card {
+            background: #1a1f2e;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+        body.dark-mode th {
+            background: linear-gradient(135deg, #1e2535 0%, #252d3d 100%);
+            color: #a0aec0;
+            border-bottom-color: #2d3748;
+        }
+        body.dark-mode td {
+            color: #cbd5e0;
+            border-bottom-color: #1e2535;
+        }
+        body.dark-mode tr:hover {
+            background: #1e2535;
+        }
+        body.dark-mode .filter-input,
+        body.dark-mode .filter-select,
+        body.dark-mode .input-group input,
+        body.dark-mode .input-group select,
+        body.dark-mode #admin-note,
+        body.dark-mode textarea {
+            background: #252d3d;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+        body.dark-mode .filter-label,
+        body.dark-mode .input-group label {
+            color: #a0aec0;
+        }
+        body.dark-mode .day-header {
+            color: #f7fafc;
+        }
+        body.dark-mode .schedule-slot {
+            background: linear-gradient(135deg, #1e2535 0%, #252d3d 100%);
+        }
+        body.dark-mode .slot-supplier {
+            color: #e2e8f0;
+        }
+        body.dark-mode .page-btn {
+            background: #252d3d;
+            border-color: #2d3748;
+            color: #a0aec0;
+        }
+        body.dark-mode .page-btn:hover:not(:disabled) {
+            background: #2a2010;
+            border-color: #ff8a00;
+            color: #ff8a00;
+        }
+        body.dark-mode .page-btn.active {
+            background: #ff8a00;
+            border-color: #ff8a00;
+            color: white;
+        }
+        body.dark-mode .btn-clear-filter {
+            background: #252d3d;
+            color: #a0aec0;
+        }
+        body.dark-mode .chart-label {
+            color: #a0aec0;
+        }
+        body.dark-mode .activity-item {
+            border-bottom-color: #2d3748;
+        }
+        body.dark-mode .activity-time {
+            color: #718096;
+        }
+        body.dark-mode .quick-action-btn {
+            background: #252d3d;
+            border-color: #2d3748;
+            color: #e2e8f0;
+        }
+        body.dark-mode .quick-action-btn:hover {
+            border-color: #ff8a00;
+            background: #2a2010;
+        }
+        body.dark-mode .bulk-action-bar {
+            background: #1e2a4a;
+            border-color: #2d4a8a;
+        }
+        body.dark-mode .badge-submitted {
+            background: #1e2a4a;
+            color: #60a5fa;
+        }
+        body.dark-mode .stat-trend-up { color: #34d399; }
+        body.dark-mode .stat-trend-down { color: #f87171; }
+
+        /* ==========================================
+           DARK MODE TOGGLE BUTTON
+        ========================================== */
+        .dark-mode-btn {
+            width: 38px;
+            height: 38px;
+            background: rgba(255,255,255,0.12);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-size: 18px;
+            color: white;
+        }
+        .dark-mode-btn:hover {
+            background: rgba(255,138,0,0.35);
+            border-color: #ff8a00;
+        }
+
+        /* ==========================================
+           NOTIFICATION BELL
+        ========================================== */
+        .notif-bell-wrap {
+            position: relative;
+            cursor: pointer;
+        }
+        .notif-bell {
+            width: 38px;
+            height: 38px;
+            background: rgba(255,255,255,0.12);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.25s ease;
+            color: white;
+        }
+        .notif-bell:hover { background: rgba(255,138,0,0.35); border-color: #ff8a00; }
+        .notif-dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            display: none;
+        }
+        .notif-dot.show { display: block; }
+
+        /* ==========================================
+           TODAY DATE IN HEADER
+        ========================================== */
+        .page-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .today-date {
+            font-size: 13px;
+            color: #718096;
+            font-weight: 500;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        body.dark-mode .today-date {
+            background: #1a1f2e;
+            border-color: #2d3748;
+            color: #a0aec0;
+        }
+
+        /* ==========================================
+           STAT CARD TREND + PROGRESS BAR
+        ========================================== */
+        .stat-trend {
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.9;
+        }
+        .stat-progress-wrap {
+            margin-top: 10px;
+            height: 4px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .stat-progress-bar {
+            height: 100%;
+            background: rgba(255,255,255,0.7);
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        /* ==========================================
+           CHARTS SECTION
+        ========================================== */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid #f0f0f0;
+        }
+        .chart-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        body.dark-mode .chart-title { color: #e2e8f0; }
+
+        /* Bar chart */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 160px;
+            padding-bottom: 28px;
+            position: relative;
+        }
+        .bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        .bar-stack {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .bar-seg {
+            width: 70%;
+            border-radius: 3px 3px 0 0;
+            transition: height 0.6s ease;
+        }
+        .bar-label {
+            font-size: 10px;
+            color: #718096;
+            position: absolute;
+            bottom: 2px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .bar-group-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            position: relative;
+            justify-content: flex-end;
+        }
+
+        /* Donut chart */
+        .donut-wrap {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            justify-content: center;
+        }
+        .donut-svg { flex-shrink: 0; }
+        .donut-legend { display: flex; flex-direction: column; gap: 10px; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+        body.dark-mode .legend-item { color: #a0aec0; }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .legend-pct {
+            font-weight: 700;
+            margin-left: auto;
+            min-width: 38px;
+            text-align: right;
+        }
+
+        /* ==========================================
+           BOTTOM PANEL: ACTIVITY FEED + QUICK ACTIONS
+        ========================================== */
+        .bottom-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        @media (max-width: 900px) {
+            .bottom-panel { grid-template-columns: 1fr; }
+        }
+        .activity-feed-card,
+        .quick-actions-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            border: 1px solid #f0f0f0;
+        }
+        .panel-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        body.dark-mode .panel-title { color: #e2e8f0; }
+        .activity-list { display: flex; flex-direction: column; gap: 0; }
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 11px 0;
+            border-bottom: 1px solid #f0f4f8;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .activity-icon.approved { background: #d1fae5; }
+        .activity-icon.rejected { background: #fee2e2; }
+        .activity-icon.pending  { background: #fef3c7; }
+        .activity-icon.edit     { background: #dbeafe; }
+        .activity-text { flex: 1; }
+        .activity-text strong { font-size: 13px; color: #2d3748; font-weight: 600; }
+        body.dark-mode .activity-text strong { color: #e2e8f0; }
+        .activity-text p { font-size: 12px; color: #718096; margin-top: 2px; }
+        .activity-time { font-size: 11px; color: #9ca3af; white-space: nowrap; }
+
+        /* Quick actions */
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .quick-action-btn {
+            background: #f7fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2d3748;
+            transition: all 0.25s ease;
+        }
+        .quick-action-btn:hover {
+            border-color: #ff8a00;
+            background: #fff5e6;
+            color: #ff8a00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,138,0,0.15);
+        }
+        .quick-action-icon { font-size: 22px; }
+
+        /* ==========================================
+           BULK ACTION BAR
+        ========================================== */
+        .bulk-action-bar {
+            display: none;
+            align-items: center;
+            gap: 14px;
+            background: #eff6ff;
+            border: 1.5px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            animation: fadeIn 0.3s ease;
+        }
+        .bulk-action-bar.show { display: flex; }
+        .bulk-count {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+        .bulk-btns { display: flex; gap: 8px; margin-left: auto; }
+
+        /* Checkbox styles */
+        .booking-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #ff8a00;
+        }
+        #select-all-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #ff8a00;
+        }
+
+        /* ==========================================
+           TOAST NOTIFICATIONS
+        ========================================== */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 18px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+            max-width: 380px;
+            pointer-events: all;
+            border-left: 4px solid #10b981;
+            animation: toastIn 0.4s cubic-bezier(0.68,-0.55,0.265,1.55);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .toast.toast-error { border-left-color: #ef4444; }
+        .toast.toast-warning { border-left-color: #f59e0b; }
+        .toast.toast-info { border-left-color: #3b82f6; }
+        .toast-icon { font-size: 20px; flex-shrink: 0; }
+        .toast-body { flex: 1; }
+        .toast-title { font-size: 13px; font-weight: 700; color: #1a202c; }
+        .toast-msg { font-size: 12px; color: #718096; margin-top: 2px; }
+        .toast-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #9ca3af;
+            padding: 0;
+            line-height: 1;
+        }
+        body.dark-mode .toast { background: #1a1f2e; }
+        body.dark-mode .toast-title { color: #e2e8f0; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(60px) scale(0.8); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .toast.hiding { opacity: 0; transform: translateX(60px); }
+
+        /* ==========================================
+           SECTION DIVIDER
+        ========================================== */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            margin-top: 8px;
+        }
+        .section-divider-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2d3748;
+            white-space: nowrap;
+        }
+        body.dark-mode .section-divider-label { color: #e2e8f0; }
+        .section-divider-line {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, #e2e8f0 0%, transparent 100%);
+            border-radius: 2px;
+        }
+        body.dark-mode .section-divider-line {
+            background: linear-gradient(90deg, #2d3748 0%, transparent 100%);
+        }
+
+        /* Quick action icon pill */
+        .quick-action-btn .quick-action-icon {
+            font-size: 22px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f4f8;
+            border-radius: 10px;
+            transition: background 0.25s;
+            flex-shrink: 0;
+        }
+        .quick-action-btn:hover .quick-action-icon { background: rgba(255,138,0,0.12); }
+        body.dark-mode .quick-action-btn .quick-action-icon { background: #1e2535; }
+        body.dark-mode .quick-action-btn:hover .quick-action-icon { background: rgba(255,138,0,0.15); }
+
+        .bottom-panel { margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <!-- NAVBAR -->
     <div class="navbar">
         <div class="navbar-brand">
-            <img src="logo-alpro.png" alt="Alpro Logo" class="logo-alpro-navbar">
+            <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()" title="Buka/Tutup Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <img src="logo-alpro.png" alt="Alpro" class="logo-alpro-navbar"
+                 onerror="this.style.display='none'; document.querySelector('.logo-fallback').style.display='flex';">
+            <span class="logo-fallback">A</span>
             Warehouse Booking - ADMIN
         </div>
         <div class="navbar-user">
             <span id="adminName">Admin</span>
+            <div class="notif-bell-wrap" title="Notifikasi">
+                <div class="notif-bell">🔔</div>
+                <div class="notif-dot" id="notif-dot"></div>
+            </div>
+            <button class="dark-mode-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
             <button class="btn-logout" onclick="logout()">Logout</button>
         </div>
     </div>
@@ -860,15 +1599,15 @@
     <!-- CONTAINER -->
     <div class="container">
         <!-- SIDEBAR -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="menu-item active" onclick="showPage('dashboard')">
-                Dashboard
+                <span class="menu-label">Dashboard</span>
             </div>
             <div class="menu-item" onclick="showPage('bookings')">
-                Bookings
+                <span class="menu-label">Bookings</span> <span class="menu-badge" id="pending-badge">0</span>
             </div>
             <div class="menu-item" onclick="showPage('timeslots')">
-                Timeslots
+                <span class="menu-label">Timeslots</span>
             </div>
         </div>
 
@@ -876,61 +1615,135 @@
         <div class="main-content">
             <!-- DASHBOARD PAGE -->
             <div id="dashboard-page" class="page-section active">
-                <div class="page-header">
-                    <h1>Dashboard</h1>
-                    <p>Jadwal booking warehouse per hari</p>
+
+                <!-- ① HEADER ROW -->
+                <div class="page-header-row">
+                    <div class="page-header" style="margin-bottom:0;">
+                        <h1>Dashboard</h1>
+                        <p>Jadwal booking warehouse per hari</p>
+                    </div>
+                    <div class="today-date">📅 <span id="today-display"></span></div>
                 </div>
 
+                <!-- ② STAT CARDS -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-card-header">
                             <div>
                                 <div class="stat-value" id="stat-total">0</div>
                                 <div class="stat-label">Total Booking</div>
+                                <div class="stat-trend">↑ <span id="trend-total">+0%</span> minggu ini</div>
                             </div>
                             <div class="stat-icon">📦</div>
                         </div>
+                        <div class="stat-progress-wrap"><div class="stat-progress-bar" id="prog-total" style="width:0%"></div></div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-card-header">
                             <div>
                                 <div class="stat-value" id="stat-pending">0</div>
                                 <div class="stat-label">Pending</div>
+                                <div class="stat-trend" id="trend-pending-wrap">⏳ <span id="trend-pending">menunggu review</span></div>
                             </div>
                             <div class="stat-icon">⏳</div>
                         </div>
+                        <div class="stat-progress-wrap"><div class="stat-progress-bar" id="prog-pending" style="width:0%"></div></div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-card-header">
                             <div>
                                 <div class="stat-value" id="stat-approved">0</div>
                                 <div class="stat-label">Approved</div>
+                                <div class="stat-trend">✅ <span id="trend-approved">dari total</span></div>
                             </div>
                             <div class="stat-icon">✅</div>
                         </div>
+                        <div class="stat-progress-wrap"><div class="stat-progress-bar" id="prog-approved" style="width:0%"></div></div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-card-header">
                             <div>
                                 <div class="stat-value" id="stat-rejected">0</div>
                                 <div class="stat-label">Rejected</div>
+                                <div class="stat-trend">❌ <span id="trend-rejected">dari total</span></div>
                             </div>
                             <div class="stat-icon">❌</div>
                         </div>
+                        <div class="stat-progress-wrap"><div class="stat-progress-bar" id="prog-rejected" style="width:0%"></div></div>
                     </div>
                 </div>
 
-                <!-- WEEKLY SCHEDULE -->
+                <!-- ③ WEEKLY SCHEDULE — main content, paling atas -->
+                <div class="section-divider">
+                    <span class="section-divider-label">📅 Jadwal Mingguan Supplier</span>
+                    <div class="section-divider-line"></div>
+                </div>
                 <div id="weekly-schedule-loader" class="loader">
                     <div class="loader-spin"></div>
                     <p>Loading jadwal mingguan...</p>
                 </div>
-                <div id="weekly-schedule-container" class="schedule-container" style="display:none;">
-                    <!-- Will be populated by JavaScript -->
+                <div id="weekly-schedule-container" class="schedule-container" style="display:none;"></div>
+
+                <!-- ④ ANALYTICS ROW: Charts + Activity Feed + Quick Actions -->
+                <div class="section-divider" style="margin-top:40px;">
+                    <span class="section-divider-label">📊 Analitik & Aktivitas</span>
+                    <div class="section-divider-line"></div>
                 </div>
+
+                <!-- Charts row -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">📊 Booking 7 Hari Terakhir</div>
+                        <div id="bar-chart-area" style="height:190px; display:flex; align-items:flex-end; gap:6px; padding-bottom:30px; position:relative;"></div>
+                        <div style="display:flex; gap:14px; margin-top:8px; font-size:12px;">
+                            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#10b981;border-radius:2px;display:inline-block;"></span>Approved</span>
+                            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block;"></span>Pending</span>
+                            <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>Rejected</span>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">🍩 Distribusi Status</div>
+                        <div class="donut-wrap" id="donut-wrap">
+                            <svg class="donut-svg" width="130" height="130" viewBox="0 0 130 130" id="donut-svg">
+                                <circle cx="65" cy="65" r="48" fill="none" stroke="#e2e8f0" stroke-width="20"/>
+                                <text x="65" y="69" text-anchor="middle" font-size="13" font-weight="700" fill="#2d3748" id="donut-center-text">-</text>
+                            </svg>
+                            <div class="donut-legend" id="donut-legend">
+                                <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Approved<span class="legend-pct" id="pct-approved">-</span></div>
+                                <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Pending<span class="legend-pct" id="pct-pending">-</span></div>
+                                <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Rejected<span class="legend-pct" id="pct-rejected">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Feed + Quick Actions side by side -->
+                <div class="bottom-panel">
+                    <div class="activity-feed-card">
+                        <div class="panel-title">🕐 Aktivitas Terbaru</div>
+                        <div class="activity-list" id="activity-list">
+                            <div style="color:#9ca3af; font-size:13px; text-align:center; padding:20px;">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="quick-actions-card">
+                        <div class="panel-title">⚡ Quick Actions</div>
+                        <div class="quick-actions-grid">
+                            <button class="quick-action-btn" onclick="showPage('bookings'); filterQuick('pending')">
+                                <span class="quick-action-icon">⏳</span><span>Lihat Pending</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="showPage('bookings'); filterQuick('approved')">
+                                <span class="quick-action-icon">✅</span><span>Lihat Approved</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="showPage('timeslots')">
+                                <span class="quick-action-icon">🕐</span><span>Manage Timeslots</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="exportToExcel()">
+                                <span class="quick-action-icon">📥</span><span>Export Excel</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- BOOKINGS PAGE -->
@@ -941,32 +1754,56 @@
                 </div>
 
                 <!-- ACTION BAR (FILTER & EXPORT) -->
-                <div class="action-bar">
-                    <div class="filter-group">
-                        <label>Filter Status:</label>
-                        <select id="filter-status" onchange="applyFilter()">
-                            <option value="all">Semua Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
-
-                        <label style="margin-left: 10px;">Dari Tanggal:</label>
-                        <input type="date" id="filter-date-from" onchange="applyFilter()">
-
-                        <label>Sampai:</label>
-                        <input type="date" id="filter-date-to" onchange="applyFilter()">
-
-                        <button class="btn-clear-filter" onclick="clearFilters()">Clear Filter</button>
+                <div class="action-bar" style="flex-direction:column; align-items:flex-start; gap:16px;">
+                    <!-- Baris 1: Cari Supplier + Filter Status + Export -->
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; width:100%;">
+                        <div class="filter-item">
+                            <label class="filter-label">Cari Supplier</label>
+                            <input type="text" id="search-supplier" placeholder="Ketik nama supplier..."
+                                   oninput="applyFilter()"
+                                   class="filter-input">
+                        </div>
+                        <div class="filter-item">
+                            <label class="filter-label">Filter Status</label>
+                            <select id="filter-status" onchange="applyFilter()" class="filter-select">
+                                <option value="all">Semua Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div style="margin-left:auto;">
+                            <button class="btn btn-excel" onclick="exportToExcel()">
+                                Export to Excel
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <button class="btn btn-excel" onclick="exportToExcel()">
-                            Export to Excel
-                        </button>
+                    <!-- Baris 2: Filter Tanggal + Clear -->
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div class="filter-item">
+                            <label class="filter-label">Dari Tanggal</label>
+                            <input type="date" id="filter-date-from" onchange="applyFilter()" class="filter-input">
+                        </div>
+                        <div class="filter-item">
+                            <label class="filter-label">Sampai</label>
+                            <input type="date" id="filter-date-to" onchange="applyFilter()" class="filter-input">
+                        </div>
+                        <div style="align-self:flex-end;">
+                            <button class="btn-clear-filter" onclick="clearFilters()">Clear Filter</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="table-container">
+                    <!-- BULK ACTION BAR -->
+                    <div class="bulk-action-bar" id="bulk-action-bar">
+                        <span class="bulk-count" id="bulk-count-text">0 dipilih</span>
+                        <div class="bulk-btns">
+                            <button class="btn btn-success" onclick="bulkApprove()" style="padding:8px 16px; font-size:13px;">✅ Approve Semua</button>
+                            <button class="btn btn-danger" onclick="bulkReject()" style="padding:8px 16px; font-size:13px;">❌ Reject Semua</button>
+                            <button class="btn btn-primary" onclick="clearBulkSelection()" style="padding:8px 16px; font-size:13px;">✕ Batal</button>
+                        </div>
+                    </div>
                     <div id="bookings-loader" class="loader">
                         <div class="loader-spin"></div>
                         <p>Loading data...</p>
@@ -974,13 +1811,15 @@
                     <table id="bookings-table" style="display:none;">
                         <thead>
                             <tr>
+                                <th style="width:40px;"><input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this)"></th>
                                 <th>ID Booking</th>
                                 <th>No PO</th>
                                 <th>No. DO</th>
                                 <th>Supplier</th>
-                                <th class="sortable sort-desc" onclick="sortTable(4)">Tanggal Kirim</th>
+                                <th class="sortable sort-desc" onclick="sortTable(5)">Tanggal Kirim</th>
                                 <th>Jam Slot</th>
                                 <th>Qty Koli</th>
+                                <th class="sortable" onclick="sortTable(8)">Submitted At</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -1127,26 +1966,351 @@
         </div>
     </div>
 
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
     <script>
         // ==========================================
         // KONFIGURASI - GANTI DENGAN WEB APP URL ANDA
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycbw_0jHkDS311DofsACZNtslfqXykOIkoUr7y2Oa_Oa5eI4PDhehuByqzLIPVPuW-Zebfw/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyo95k5bgO_N5Bv-egEAX6Hlryr2KIj7VaP3fbmkKMrA1jlDS1N3ahHSmzx9R4njeALIA/exec';
 
         let currentBooking = null;
         let currentTimeslot = null;
         let currentEditBooking = null;
-        let allBookingsData = []; // Store all bookings for export
-        let currentSortColumn = 4; // Default: Tanggal Kirim (index 4)
-        let currentSortDirection = 'desc'; // Default: descending (terbaru di atas)
+        let allBookingsData = [];
+        let currentSortColumn = 5; // Updated: now col 5 is Tanggal Kirim (shifted by checkbox col)
+        let currentSortDirection = 'desc';
         let currentPage = 1;
         const ROWS_PER_PAGE = 20;
         let filteredBookingsData = [];
+        let selectedBookingIds = new Set(); // for bulk actions
+
+        // ==========================================
+        // TOGGLE SIDEBAR
+        // ==========================================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const btn = document.getElementById('hamburgerBtn');
+            sidebar.classList.toggle('collapsed');
+            btn.classList.toggle('open');
+        }
+
+        // ==========================================
+        // DARK MODE
+        // ==========================================
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            document.getElementById('darkModeBtn').textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDark ? '1' : '0');
+        }
+
+        // ==========================================
+        // TOAST NOTIFICATIONS
+        // ==========================================
+        function showToast(title, msg, type = 'success') {
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type === 'success' ? '' : type}`.trim();
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || '✅'}</span>
+                <div class="toast-body">
+                    <div class="toast-title">${title}</div>
+                    ${msg ? `<div class="toast-msg">${msg}</div>` : ''}
+                </div>
+                <button class="toast-close" onclick="dismissToast(this.parentElement)">✕</button>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => dismissToast(toast), 4000);
+        }
+
+        function dismissToast(toast) {
+            if (!toast || !toast.parentElement) return;
+            toast.classList.add('hiding');
+            setTimeout(() => toast.remove(), 350);
+        }
+
+        // ==========================================
+        // RELATIVE DATE  ("12 hari lalu")
+        // ==========================================
+        function relativeDate(dateStr) {
+            if (!dateStr || dateStr === '-') return '-';
+            // Google Sheets returns "yyyy-MM-dd HH:mm:ss" — replace space with T for valid ISO parse
+            const normalized = dateStr.toString().replace(' ', 'T');
+            const d = new Date(normalized);
+            if (isNaN(d)) return dateStr;
+            // Format: "09 Jun 2026, 14:41"
+            const day   = String(d.getDate()).padStart(2, '0');
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+            const mon   = months[d.getMonth()];
+            const year  = d.getFullYear();
+            const hh    = String(d.getHours()).padStart(2, '0');
+            const mm    = String(d.getMinutes()).padStart(2, '0');
+            return `${day} ${mon} ${year}, ${hh}:${mm}`;
+        }
+
+        // ==========================================
+        // TODAY DATE DISPLAY
+        // ==========================================
+        function setTodayDisplay() {
+            const now = new Date();
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('today-display').textContent = now.toLocaleDateString('id-ID', opts);
+        }
+
+        // ==========================================
+        // FILTER QUICK (from quick actions)
+        // ==========================================
+        function filterQuick(status) {
+            setTimeout(() => {
+                const el = document.getElementById('filter-status');
+                if (el) { el.value = status; applyFilter(); }
+            }, 100);
+        }
+
+        // ==========================================
+        // CHARTS
+        // ==========================================
+        function renderBarChart(bookings) {
+            const area = document.getElementById('bar-chart-area');
+            if (!area) return;
+            area.innerHTML = '';
+
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                days.push(d);
+            }
+
+            const maxCount = 10; // will be recalculated
+            let maxTotal = 1;
+            const dayData = days.map(d => {
+                const ds = d.toISOString().split('T')[0];
+                const dayBookings = bookings.filter(b => b.tgl_kirim === ds);
+                const approved = dayBookings.filter(b => b.status?.toLowerCase() === 'approved').length;
+                const pending  = dayBookings.filter(b => b.status?.toLowerCase() === 'pending').length;
+                const rejected = dayBookings.filter(b => b.status?.toLowerCase() === 'rejected').length;
+                const total = approved + pending + rejected;
+                if (total > maxTotal) maxTotal = total;
+                return { d, ds, approved, pending, rejected, total };
+            });
+
+            const HEIGHT = 130;
+            days.forEach((d, i) => {
+                const data = dayData[i];
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative; gap:0;';
+
+                const stack = document.createElement('div');
+                stack.style.cssText = `width:60%; display:flex; flex-direction:column-reverse; gap:1px; align-items:stretch; justify-content:flex-end;`;
+
+                const colors = [
+                    { key: 'rejected', color: '#ef4444' },
+                    { key: 'pending',  color: '#f59e0b' },
+                    { key: 'approved', color: '#10b981' }
+                ];
+                colors.forEach(({ key, color }) => {
+                    if (data[key] > 0) {
+                        const seg = document.createElement('div');
+                        const h = Math.max(4, Math.round((data[key] / maxTotal) * HEIGHT));
+                        seg.style.cssText = `height:${h}px; background:${color}; border-radius:3px; transition:height 0.6s ease;`;
+                        seg.title = `${key}: ${data[key]}`;
+                        stack.appendChild(seg);
+                    }
+                });
+
+                const label = document.createElement('div');
+                label.style.cssText = 'font-size:10px; color:#718096; margin-top:6px; text-align:center;';
+                const days_id = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+                label.textContent = days_id[d.getDay()];
+
+                wrap.appendChild(stack);
+                wrap.appendChild(label);
+                area.appendChild(wrap);
+            });
+        }
+
+        function renderDonutChart(total, approved, pending, rejected) {
+            const svg = document.getElementById('donut-svg');
+            if (!svg || total === 0) return;
+
+            document.getElementById('pct-approved').textContent = Math.round(approved/total*100) + '%';
+            document.getElementById('pct-pending').textContent  = Math.round(pending/total*100)  + '%';
+            document.getElementById('pct-rejected').textContent = Math.round(rejected/total*100) + '%';
+            document.getElementById('donut-center-text').textContent = total;
+
+            const R = 48;
+            const cx = 65, cy = 65;
+            const circ = 2 * Math.PI * R;
+
+            const segments = [
+                { value: approved, color: '#10b981' },
+                { value: pending,  color: '#f59e0b' },
+                { value: rejected, color: '#ef4444' }
+            ];
+
+            // Remove old segments
+            svg.querySelectorAll('.donut-seg').forEach(e => e.remove());
+
+            let offset = 0;
+            segments.forEach(seg => {
+                if (seg.value === 0) return;
+                const pct = seg.value / total;
+                const dash = pct * circ;
+                const gap = circ - dash;
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('class', 'donut-seg');
+                circle.setAttribute('cx', cx);
+                circle.setAttribute('cy', cy);
+                circle.setAttribute('r', R);
+                circle.setAttribute('fill', 'none');
+                circle.setAttribute('stroke', seg.color);
+                circle.setAttribute('stroke-width', '20');
+                circle.setAttribute('stroke-dasharray', `${dash} ${gap}`);
+                circle.setAttribute('stroke-dashoffset', -offset * circ);
+                circle.style.transform = 'rotate(-90deg)';
+                circle.style.transformOrigin = '65px 65px';
+                svg.insertBefore(circle, svg.querySelector('text'));
+                offset += pct;
+            });
+        }
+
+        // ==========================================
+        // ACTIVITY FEED
+        // ==========================================
+        function renderActivityFeed(bookings) {
+            const list = document.getElementById('activity-list');
+            if (!list) return;
+
+            // Take last 5 bookings sorted by submitted_at desc
+            const recent = [...bookings]
+                .filter(b => b.submitted_at)
+                .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+                .slice(0, 6);
+
+            if (recent.length === 0) {
+                list.innerHTML = '<div style="color:#9ca3af; font-size:13px; text-align:center; padding:20px;">Belum ada aktivitas</div>';
+                return;
+            }
+
+            list.innerHTML = recent.map(b => {
+                const st = b.status?.toLowerCase();
+                const iconClass = st === 'approved' ? 'approved' : st === 'rejected' ? 'rejected' : 'pending';
+                const icon = st === 'approved' ? '✅' : st === 'rejected' ? '❌' : '⏳';
+                return `<div class="activity-item">
+                    <div class="activity-icon ${iconClass}">${icon}</div>
+                    <div class="activity-text">
+                        <strong>${b.supplier}</strong>
+                        <p>${b.id_booking} · ${b.tgl_kirim} ${b.jam_slot}</p>
+                    </div>
+                    <span class="activity-time">${relativeDate(b.submitted_at)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // ==========================================
+        // BULK SELECT / ACTION
+        // ==========================================
+        function toggleSelectAll(cb) {
+            const checkboxes = document.querySelectorAll('.booking-checkbox');
+            checkboxes.forEach(c => {
+                c.checked = cb.checked;
+                const id = c.dataset.id;
+                const status = c.dataset.status;
+                if (status === 'pending') {
+                    if (cb.checked) selectedBookingIds.add(id);
+                    else selectedBookingIds.delete(id);
+                }
+            });
+            updateBulkBar();
+        }
+
+        function onBookingCheckboxChange(cb) {
+            const id = cb.dataset.id;
+            if (cb.checked) selectedBookingIds.add(id);
+            else selectedBookingIds.delete(id);
+            updateBulkBar();
+        }
+
+        function updateBulkBar() {
+            const bar = document.getElementById('bulk-action-bar');
+            const countText = document.getElementById('bulk-count-text');
+            if (selectedBookingIds.size > 0) {
+                bar.classList.add('show');
+                countText.textContent = `${selectedBookingIds.size} booking dipilih`;
+            } else {
+                bar.classList.remove('show');
+            }
+        }
+
+        function clearBulkSelection() {
+            selectedBookingIds.clear();
+            document.querySelectorAll('.booking-checkbox').forEach(c => c.checked = false);
+            const sa = document.getElementById('select-all-checkbox');
+            if (sa) sa.checked = false;
+            updateBulkBar();
+        }
+
+        async function bulkApprove() {
+            if (selectedBookingIds.size === 0) return;
+            const ids = [...selectedBookingIds];
+            const targets = allBookingsData.filter(b => ids.includes(b.id_booking) && b.status.toLowerCase() === 'pending');
+            if (targets.length === 0) { showToast('Info', 'Tidak ada booking pending yang dipilih', 'info'); return; }
+
+            let successCount = 0;
+            for (const booking of targets) {
+                try {
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'updateBookingStatus', rowIndex: booking.rowIndex, status: 'Approved', adminNote: 'Bulk approve' })
+                    });
+                    const r = await res.json();
+                    if (r.success) successCount++;
+                } catch(e) {}
+            }
+            clearBulkSelection();
+            showToast('Bulk Approve', `${successCount} booking berhasil di-approve`, 'success');
+            loadBookings();
+            loadDashboard();
+        }
+
+        async function bulkReject() {
+            if (selectedBookingIds.size === 0) return;
+            const ids = [...selectedBookingIds];
+            const targets = allBookingsData.filter(b => ids.includes(b.id_booking) && b.status.toLowerCase() === 'pending');
+            if (targets.length === 0) { showToast('Info', 'Tidak ada booking pending yang dipilih', 'info'); return; }
+
+            let successCount = 0;
+            for (const booking of targets) {
+                try {
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'updateBookingStatus', rowIndex: booking.rowIndex, status: 'Rejected', adminNote: 'Bulk reject' })
+                    });
+                    const r = await res.json();
+                    if (r.success) successCount++;
+                } catch(e) {}
+            }
+            clearBulkSelection();
+            showToast('Bulk Reject', `${successCount} booking berhasil di-reject`, 'error');
+            loadBookings();
+            loadDashboard();
+        }
 
         // ==========================================
         // CHECK AUTH
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
+            // Dark mode restore
+            if (localStorage.getItem('darkMode') === '1') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeBtn').textContent = '☀️';
+            }
+
+            setTodayDisplay();
+
             const userData = localStorage.getItem('userData');
             if (!userData) {
                 window.location.href = 'index.html';
@@ -1176,7 +2340,12 @@
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.classList.add('active');
+            // Find the menu item that corresponds to this page
+            document.querySelectorAll('.menu-item').forEach(item => {
+                if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${page}'`)) {
+                    item.classList.add('active');
+                }
+            });
 
             // Update page
             document.querySelectorAll('.page-section').forEach(section => {
@@ -1196,7 +2365,6 @@
         function sortTable(columnIndex) {
             if (filteredBookingsData.length === 0) return;
 
-            // Toggle sort direction
             if (currentSortColumn === columnIndex) {
                 currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
             } else {
@@ -1204,7 +2372,6 @@
                 currentSortDirection = 'desc';
             }
 
-            // Update header classes
             const table = document.getElementById('bookings-table');
             const headers = table.querySelectorAll('th');
             headers.forEach((th, index) => {
@@ -1214,14 +2381,14 @@
                 }
             });
 
-            // Column key map
-            const keyMap = {0:'id_booking', 1:'no_po', 2:'no_do', 3:'supplier', 4:'tgl_kirim', 5:'jam_slot', 6:'qty_koli', 7:'status'};
+            // Column key map — shifted +1 because of checkbox col at index 0
+            const keyMap = {1:'id_booking', 2:'no_po', 3:'no_do', 4:'supplier', 5:'tgl_kirim', 6:'jam_slot', 7:'qty_koli', 8:'submitted_at', 9:'status'};
             const key = keyMap[columnIndex];
 
             filteredBookingsData.sort((a, b) => {
                 let aVal = a[key] || '';
                 let bVal = b[key] || '';
-                if (columnIndex === 4) { aVal = new Date(aVal); bVal = new Date(bVal); }
+                if (columnIndex === 5) { aVal = new Date(aVal); bVal = new Date(bVal); }
                 if (currentSortDirection === 'asc') return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
                 else return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
             });
@@ -1234,23 +2401,62 @@
         // ==========================================
         async function loadDashboard() {
             try {
-                // Load stats
                 const statsResponse = await fetch(API_URL, {
                     method: 'POST',
-                    body: JSON.stringify({
-                        action: 'getDashboardStats'
-                    })
+                    body: JSON.stringify({ action: 'getDashboardStats' })
                 });
 
                 const statsResult = await statsResponse.json();
                 if (statsResult.success) {
-                    document.getElementById('stat-total').textContent = statsResult.data.total;
-                    document.getElementById('stat-pending').textContent = statsResult.data.pending;
-                    document.getElementById('stat-approved').textContent = statsResult.data.approved;
-                    document.getElementById('stat-rejected').textContent = statsResult.data.rejected;
+                    const { total, pending, approved, rejected } = statsResult.data;
+                    document.getElementById('stat-total').textContent    = total;
+                    document.getElementById('stat-pending').textContent  = pending;
+                    document.getElementById('stat-approved').textContent = approved;
+                    document.getElementById('stat-rejected').textContent = rejected;
+
+                    // Progress bars
+                    if (total > 0) {
+                        document.getElementById('prog-total').style.width    = '100%';
+                        document.getElementById('prog-pending').style.width  = Math.round(pending/total*100)  + '%';
+                        document.getElementById('prog-approved').style.width = Math.round(approved/total*100) + '%';
+                        document.getElementById('prog-rejected').style.width = Math.round(rejected/total*100) + '%';
+                    }
+
+                    // Trend labels
+                    document.getElementById('trend-approved').textContent = total > 0 ? Math.round(approved/total*100) + '% dari total' : '-';
+                    document.getElementById('trend-rejected').textContent = total > 0 ? Math.round(rejected/total*100) + '% dari total' : '-';
+                    document.getElementById('trend-pending').textContent  = pending > 0 ? `${pending} menunggu review` : 'Semua sudah diproses';
+
+                    // Badge pending di sidebar
+                    const badge = document.getElementById('pending-badge');
+                    if (badge) {
+                        badge.textContent = pending;
+                        if (pending > 0) badge.classList.add('show');
+                        else badge.classList.remove('show');
+                    }
+
+                    // Notification dot
+                    const dot = document.getElementById('notif-dot');
+                    if (dot) {
+                        if (pending > 0) dot.classList.add('show');
+                        else dot.classList.remove('show');
+                    }
                 }
 
-                // Load weekly schedule
+                // Load all bookings for charts + activity feed
+                const bookingsRes = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getBookings', filterStatus: 'all' })
+                });
+                const bookingsResult = await bookingsRes.json();
+                if (bookingsResult.success) {
+                    const bookings = bookingsResult.data;
+                    const { total, pending, approved, rejected } = statsResult.data;
+                    renderBarChart(bookings);
+                    renderDonutChart(total, approved, pending, rejected);
+                    renderActivityFeed(bookings);
+                }
+
                 await loadWeeklySchedule();
             } catch (error) {
                 console.error('Error loading dashboard:', error);
@@ -1277,7 +2483,7 @@
                 const result = await response.json();
                 if (result.success) {
                     const bookings = result.data;
-                    
+
                     // Group bookings by day of week and time
                     const weekDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                     const dayIcons = ['☀️', '🌤️', '⛅', '🌥️', '🌦️', '🌧️'];
@@ -1374,6 +2580,9 @@
             document.getElementById('filter-status').value = 'all';
             document.getElementById('filter-date-from').value = '';
             document.getElementById('filter-date-to').value = '';
+            if (document.getElementById('search-supplier')) {
+                document.getElementById('search-supplier').value = '';
+            }
             applyFilter();
         }
 
@@ -1381,10 +2590,22 @@
         // APPLY FILTER
         // ==========================================
         function applyFilter() {
-            const filterStatus = document.getElementById('filter-status').value;
+            const filterStatus   = document.getElementById('filter-status').value;
             const filterDateFrom = document.getElementById('filter-date-from').value;
-            const filterDateTo = document.getElementById('filter-date-to').value;
-            loadBookings(filterStatus, filterDateFrom, filterDateTo);
+            const filterDateTo   = document.getElementById('filter-date-to').value;
+            const searchSupplier = document.getElementById('search-supplier') ? document.getElementById('search-supplier').value.trim().toLowerCase() : '';
+
+            // Filter from already loaded data (no need to re-fetch)
+            filteredBookingsData = allBookingsData.filter(b => {
+                const matchStatus = filterStatus === 'all' || b.status.toLowerCase() === filterStatus;
+                const matchFrom   = !filterDateFrom || b.tgl_kirim >= filterDateFrom;
+                const matchTo     = !filterDateTo   || b.tgl_kirim <= filterDateTo;
+                const matchSearch = !searchSupplier || b.supplier.toLowerCase().includes(searchSupplier);
+                return matchStatus && matchFrom && matchTo && matchSearch;
+            });
+
+            currentPage = 1;
+            renderPage(1);
         }
 
         // ==========================================
@@ -1417,14 +2638,14 @@
 
                     // Apply default sort (descending by Tanggal Kirim)
                     if (result.data.length > 0) {
-                        sortTable(4);
+                        sortTable(5);
                     } else {
                         renderPage(1);
                     }
                 }
             } catch (error) {
                 console.error('Error loading bookings:', error);
-                alert('Error loading bookings');
+                showToast('Error', 'Gagal memuat data bookings', 'error');
             }
         }
 
@@ -1443,7 +2664,7 @@
             const pageData = data.slice(start, end);
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #9ca3af; padding: 30px;">📭 Tidak ada data sesuai filter</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color: #9ca3af; padding: 30px;">📭 Tidak ada data sesuai filter</td></tr>';
                 document.getElementById('pagination-bar').style.display = 'none';
                 return;
             }
@@ -1461,7 +2682,8 @@
                 }
 
                 let actionButtons = '';
-                if (booking.status.toLowerCase() === 'pending') {
+                const isPending = booking.status.toLowerCase() === 'pending';
+                if (isPending) {
                     actionButtons = `
                         <button class="btn btn-success" onclick='approveBooking(${JSON.stringify(booking)})'>Approve</button>
                         <button class="btn btn-danger" onclick='rejectBooking(${JSON.stringify(booking)})'>Reject</button>
@@ -1471,7 +2693,15 @@
                     actionButtons = '<em style="color: #9ca3af;">Sudah diproses</em>';
                 }
 
+                const checkboxHtml = isPending
+                    ? `<input type="checkbox" class="booking-checkbox" data-id="${booking.id_booking}" data-status="${booking.status.toLowerCase()}" onchange="onBookingCheckboxChange(this)" ${selectedBookingIds.has(booking.id_booking) ? 'checked' : ''}>`
+                    : '';
+
+                const submittedRelative = relativeDate(booking.submitted_at);
+                const submittedTooltip = booking.submitted_at || '-';
+
                 tr.innerHTML = `
+                    <td style="text-align:center;">${checkboxHtml}</td>
                     <td style="font-weight: 600;">${booking.id_booking}</td>
                     <td>${booking.no_po}</td>
                     <td>${booking.no_do || '-'}</td>
@@ -1479,6 +2709,7 @@
                     <td>${booking.tgl_kirim}</td>
                     <td>${booking.jam_slot}</td>
                     <td>${booking.qty_koli}</td>
+                    <td><span class="badge-submitted" title="${submittedTooltip}">${submittedRelative}</span></td>
                     <td>${statusBadge}</td>
                     <td style="white-space: nowrap;">${actionButtons}</td>
                 `;
@@ -1534,21 +2765,22 @@
         // ==========================================
         function exportToExcel() {
             if (allBookingsData.length === 0) {
-                alert('Tidak ada data untuk diexport');
+                showToast('Info', 'Tidak ada data untuk diexport', 'info'); return;
                 return;
             }
 
             // ✅ PERUBAHAN: Excel Export dengan urutan kolom baru
             const excelData = allBookingsData.map(booking => ({
-                'ID Booking': booking.id_booking,
-                'No PO': booking.no_po,
-                'No. DO': booking.no_do || '-',
-                'Supplier': booking.supplier,
+                'ID Booking'   : booking.id_booking,
+                'No PO'        : booking.no_po,
+                'No. DO'       : booking.no_do || '-',
+                'Supplier'     : booking.supplier,
+                'Submitted At' : booking.submitted_at || '-',
                 'Tanggal Kirim': booking.tgl_kirim,
-                'Jam Slot': booking.jam_slot,
-                'Qty Koli': booking.qty_koli,
-                'Status': booking.status,
-                'Admin Note': booking.admin_note || '-'
+                'Jam Slot'     : booking.jam_slot,
+                'Qty Koli'     : booking.qty_koli,
+                'Status'       : booking.status,
+                'Admin Note'   : booking.admin_note || '-'
             }));
 
             // Create workbook and worksheet
@@ -1598,15 +2830,15 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Status berhasil diupdate!');
+                    showToast('Status Diupdate', `Booking berhasil di-${currentBooking.newStatus.toLowerCase()}`, currentBooking.newStatus === 'Approved' ? 'success' : 'error');
                     closeModal();
                     applyFilter();
                     loadDashboard();
                 } else {
-                    alert('Error: ' + result.message);
+                    showToast('Error', result.message, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showToast('Error', error.message, 'error');
             }
         }
 
@@ -1678,7 +2910,7 @@
             const alasan      = document.getElementById('edit-alasan').value.trim();
 
             if (!newJamSlot) {
-                alert('Pilih jam slot terlebih dahulu');
+                showToast('Validasi', 'Pilih jam slot terlebih dahulu', 'warning');
                 return;
             }
 
@@ -1703,14 +2935,14 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Jadwal berhasil diupdate! Notifikasi email telah dikirim ke supplier.');
+                    showToast('Jadwal Diupdate', 'Notifikasi email telah dikirim ke supplier', 'success');
                     closeModalEditSchedule();
                     applyFilter();
                 } else {
-                    alert('Error: ' + result.message);
+                    showToast('Error', result.message, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showToast('Error', error.message, 'error');
             }
         }
 
@@ -1760,7 +2992,7 @@
                 }
             } catch (error) {
                 console.error('Error loading timeslots:', error);
-                alert('Error loading timeslots');
+                showToast('Error', 'Gagal memuat timeslots', 'error');
             }
         }
 
@@ -1779,11 +3011,11 @@
             const newCapacity = parseInt(document.getElementById('edit-capacity').value);
 
             if (!newJamSlot) {
-                alert('Jam slot tidak boleh kosong');
+                showToast('Validasi', 'Jam slot tidak boleh kosong', 'warning');
                 return;
             }
             if (!newCapacity || newCapacity < 1) {
-                alert('Kapasitas minimal 1');
+                showToast('Validasi', 'Kapasitas minimal 1', 'warning');
                 return;
             }
 
@@ -1800,7 +3032,7 @@
                     });
                     const jamResult = await jamRes.json();
                     if (!jamResult.success) {
-                        alert('Error update jam: ' + jamResult.message);
+                        showToast('Error', 'Error update jam: ' + jamResult.message, 'error');
                         return;
                     }
                 }
@@ -1816,14 +3048,14 @@
                 });
                 const capResult = await capRes.json();
                 if (capResult.success) {
-                    alert('Timeslot berhasil diupdate!');
+                    showToast('Timeslot Diupdate', 'Perubahan jam slot berhasil disimpan', 'success');
                     closeModalCapacity();
                     loadTimeslots();
                 } else {
-                    alert('Error: ' + capResult.message);
+                    showToast('Error', capResult.message, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showToast('Error', error.message, 'error');
             }
         }
 
@@ -1850,11 +3082,11 @@
             const kapasitas = parseInt(document.getElementById('add-capacity').value);
 
             if (!jamSlot) {
-                alert('Jam slot tidak boleh kosong');
+                showToast('Validasi', 'Jam slot tidak boleh kosong', 'warning');
                 return;
             }
             if (!kapasitas || kapasitas < 1) {
-                alert('Kapasitas minimal 1');
+                showToast('Validasi', 'Kapasitas minimal 1', 'warning');
                 return;
             }
 
@@ -1870,14 +3102,14 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Timeslot berhasil ditambahkan!');
+                    showToast('Timeslot Ditambahkan', `Jam slot baru berhasil ditambahkan`, 'success');
                     closeModalAddTimeslot();
                     loadTimeslots();
                 } else {
-                    alert('Error: ' + result.message);
+                    showToast('Error', result.message, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showToast('Error', error.message, 'error');
             }
         }
 
@@ -1907,14 +3139,14 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('Timeslot berhasil dihapus!');
+                    showToast('Timeslot Dihapus', 'Jam slot berhasil dihapus', 'success');
                     closeModalDeleteTimeslot();
                     loadTimeslots();
                 } else {
-                    alert('Error: ' + result.message);
+                    showToast('Error', result.message, 'error');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                showToast('Error', error.message, 'error');
             }
         }
 
