@@ -6,6 +6,8 @@
     <title>Admin Dashboard - Warehouse Booking</title>
     <!-- SheetJS Library untuk Export Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -1878,7 +1880,7 @@
             </div>
             <div style="display: flex; gap: 12px; margin-top: 10px;">
                 <button class="btn btn-primary" onclick="closeModal()" style="flex: 1;">Batal</button>
-                <button class="btn btn-success" id="btn-confirm" onclick="confirmStatus()" style="flex: 1;">Konfirmasi</button>
+                <button class="btn btn-success" id="confirm-status-btn" onclick="confirmStatus()" style="flex: 1;">Konfirmasi</button>
             </div>
         </div>
     </div>
@@ -2817,6 +2819,10 @@
         async function confirmStatus() {
             const adminNote = document.getElementById('admin-note').value;
 
+            // Disable button & tampilkan loading
+            const confirmBtn = document.getElementById('confirm-status-btn');
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Memproses...'; }
+
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -2830,15 +2836,33 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    showToast('Status Diupdate', `Booking berhasil di-${currentBooking.newStatus.toLowerCase()}`, currentBooking.newStatus === 'Approved' ? 'success' : 'error');
+                    const newStatus = currentBooking.newStatus;
+                    const rowIndex  = currentBooking.rowIndex;
+
+                    // ✅ UPDATE LANGSUNG DI MEMORY — tabel berubah seketika tanpa fetch ulang
+                    allBookingsData = allBookingsData.map(b =>
+                        b.rowIndex === rowIndex ? { ...b, status: newStatus, admin_note: adminNote } : b
+                    );
+                    filteredBookingsData = filteredBookingsData.map(b =>
+                        b.rowIndex === rowIndex ? { ...b, status: newStatus, admin_note: adminNote } : b
+                    );
+
+                    showToast(
+                        newStatus === 'Approved' ? '✅ Booking Diapprove' : '❌ Booking Direject',
+                        `${currentBooking.supplier} — ${currentBooking.jam_slot}`,
+                        newStatus === 'Approved' ? 'success' : 'error'
+                    );
+
                     closeModal();
-                    applyFilter();
-                    loadDashboard();
+                    renderPage(currentPage); // ✅ Re-render halaman yang sama, instant
+                    loadDashboard();         // Update stat cards di background
                 } else {
                     showToast('Error', result.message, 'error');
                 }
             } catch (error) {
                 showToast('Error', error.message, 'error');
+            } finally {
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Konfirmasi'; }
             }
         }
 
